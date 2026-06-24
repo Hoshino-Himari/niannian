@@ -673,24 +673,29 @@
   }
   const sounds={
     wood(){
-      const a=actx(),t=a.currentTime;
-      // 撞擊噪音瞬態（木質衝擊感）
-      const nb=a.createBuffer(1,Math.floor(a.sampleRate*.022),a.sampleRate);
-      const nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
-      const ns=a.createBufferSource();ns.buffer=nb;
-      const nf=a.createBiquadFilter();nf.type='bandpass';nf.frequency.value=850;nf.Q.value=3.5;
-      const ng=a.createGain();ng.gain.setValueAtTime(.75,t);ng.gain.exponentialRampToValueAtTime(.001,t+.022);
-      ns.connect(nf);nf.connect(ng);emit(ng,.95,.18);ns.start(t);
-      // 木質共鳴主音（pitch 下滑）
-      const o1=a.createOscillator(),g1=a.createGain();
-      o1.type='sine';o1.frequency.setValueAtTime(330,t);o1.frequency.exponentialRampToValueAtTime(185,t+.11);
-      g1.gain.setValueAtTime(.9,t);g1.gain.exponentialRampToValueAtTime(.001,t+.34);
-      o1.connect(g1);emit(g1,1,.32);o1.start(t);o1.stop(t+.36);
-      // 二次諧波（質感）
-      const o2=a.createOscillator(),g2=a.createGain();
-      o2.type='triangle';o2.frequency.setValueAtTime(660,t);o2.frequency.exponentialRampToValueAtTime(370,t+.07);
-      g2.gain.setValueAtTime(.28,t);g2.gain.exponentialRampToValueAtTime(.001,t+.13);
-      o2.connect(g2);emit(g2,.8,.22);o2.start(t);o2.stop(t+.15);
+      const a=actx(),t=a.currentTime,sr=a.sampleRate;
+      // ── Karplus-Strong 物理建模 ── 撞擊中空木體共鳴
+      const freq=375,N=Math.round(sr/freq),total=Math.ceil(sr*.58),decay=0.9935;
+      const ring=new Float32Array(N);
+      // 初始激勵：帶寬窄化的雜訊（模仿木槌撞擊點）
+      for(let i=0;i<N;i++) ring[i]=(Math.random()*2-1)*Math.exp(-i/N*3.5);
+      const ksBuf=a.createBuffer(1,total,sr);const ksOut=ksBuf.getChannelData(0);
+      for(let i=0;i<total;i++){
+        const p=i%N,q=(i+1)%N;
+        ksOut[i]=ring[p];
+        ring[p]=decay*.5*(ring[p]+ring[q]); // 低通 + 衰減
+      }
+      const ksSrc=a.createBufferSource();ksSrc.buffer=ksBuf;
+      // 撞擊點擊聲（最初 6ms 的寬頻噪音）
+      const clkBuf=a.createBuffer(1,Math.floor(sr*.006),sr);
+      const clkD=clkBuf.getChannelData(0);
+      for(let i=0;i<clkD.length;i++) clkD[i]=(Math.random()*2-1)*Math.pow(1-i/clkD.length,2);
+      const clkSrc=a.createBufferSource();clkSrc.buffer=clkBuf;
+      const clkF=a.createBiquadFilter();clkF.type='highpass';clkF.frequency.value=800;
+      const clkG=a.createGain();clkG.gain.value=.4;
+      clkSrc.connect(clkF);clkF.connect(clkG);
+      emit(ksSrc,1.15,.25);emit(clkG,.7,.12);
+      ksSrc.start(t);clkSrc.start(t);
     },
     bell(){
       const a=actx(),t=a.currentTime;
@@ -738,41 +743,72 @@
     };
   });
 
-  // ========= 跟念語音系統 =========
-  let _voices=[],_chantActive=false,_chantTimer=null;
-  function _loadV(){_voices=speechSynthesis.getVoices();}
-  _loadV();if(speechSynthesis.onvoiceschanged!==undefined)speechSynthesis.onvoiceschanged=_loadV;
-  function _bestVoice(){
-    return _voices.find(v=>v.lang==='zh-TW')
-      ||_voices.find(v=>v.lang==='zh-CN')
-      ||_voices.find(v=>v.lang.startsWith('zh'))
-      ||null;
-  }
-  function _doChant(text){
-    if(!_chantActive)return;
-    speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(text);
-    u.lang='zh-TW';u.rate=0.34;u.pitch=0.58;u.volume=1;
-    const v=_bestVoice();if(v)u.voice=v;
-    u.onend=()=>{if(_chantActive)_chantTimer=setTimeout(()=>_doChant(text),1600);};
-    u.onerror=()=>{};
-    speechSynthesis.speak(u);
-  }
+  // ========= 梵音共振峰合成誦念（Formant Synthesis）=========
+  // 音節格式: [基頻Hz, F1共振峰kHz, F2共振峰kHz, F3共振峰kHz, 時長s]
+  // 共振峰頻率對應梵漢語元音音色
+  const _SYLLS={
+    '南無阿彌陀佛': [[147,.70,1.22,2.85,.92],[131,.50,.90,2.70,.82],[147,.80,1.20,2.80,.92],[165,.28,2.25,3.10,.88],[131,.58,.95,2.75,.88],[110,.43,.82,2.65,1.65]],
+    '觀世音菩薩':   [[147,.46,.75,2.60,.92],[165,.31,2.20,3.00,.78],[165,.60,.88,2.70,.78],[147,.52,.76,2.60,.82],[131,.64,1.00,2.70,1.45]],
+    '南無觀世音菩薩':[[147,.70,1.22,2.85,.80],[131,.50,.90,2.70,.72],[147,.46,.75,2.60,.85],[165,.31,2.20,3.00,.75],[165,.60,.88,2.70,.75],[147,.52,.76,2.60,.80],[131,.64,1.00,2.70,1.45]],
+    '唵嘛呢叭咪吽': [[165,.52,.76,2.50,1.25],[147,.72,1.18,2.80,.92],[147,.31,2.20,3.00,.88],[131,.72,1.20,2.80,.88],[123,.33,2.10,3.00,.88],[98,.46,.72,2.55,1.85]],
+    '般若波羅蜜多心經':[[147,.70,1.22,2.85,.78],[147,.31,2.20,3.00,.75],[165,.52,.76,2.60,.75],[131,.72,1.20,2.80,.78],[131,.28,2.25,3.10,.78],[147,.70,1.22,2.85,.78],[147,.52,.76,2.60,.78],[123,.31,2.20,3.00,.75],[131,.43,.82,2.65,1.45]],
+    '準提神咒':     [[147,.52,.76,2.60,.85],[131,.31,2.20,3.00,.80],[131,.38,2.00,2.90,.80],[131,.52,.76,2.60,.80],[131,.72,1.20,2.80,1.45]],
+  };
+  const _ALIAS={'六字大明咒':'唵嘛呢叭咪吽','大悲咒':'南無觀世音菩薩','觀世音菩薩聖號':'觀世音菩薩'};
+  function _getSylls(m){return _SYLLS[_ALIAS[m]||m]||null;}
+
+  let _chantActive=false,_chantTimer=null,_chantOscs=[];
   function stopChant(){
     _chantActive=false;clearTimeout(_chantTimer);
-    try{speechSynthesis.cancel();}catch(e){}
-    const sw=document.getElementById('chantSwitch');
-    if(sw)sw.classList.remove('on');
+    _chantOscs.forEach(o=>{try{o.stop(0);}catch(e){}});_chantOscs=[];
+    const sw=document.getElementById('chantSwitch');if(sw)sw.classList.remove('on');
+  }
+  function _playChant(mantra){
+    if(!_chantActive)return;
+    const sylls=_getSylls(mantra);
+    if(!sylls){_chantTimer=setTimeout(()=>_playChant(mantra),3000);return;}
+    const a=actx();let t=a.currentTime+0.25,totalDur=0;const oscs=[];
+    sylls.forEach(([f0,f1k,f2k,f3k,len])=>{
+      // ── 濁音源：鋸齒波（人聲聲帶振動的近似）──
+      const src=a.createOscillator();src.type='sawtooth';src.frequency.value=f0;
+      // 顫音 LFO（5.3Hz，模仿男聲吟誦抖音）
+      const lfo=a.createOscillator();lfo.frequency.value=5.3;
+      const lg=a.createGain();lg.gain.value=f0*.014;lfo.connect(lg);lg.connect(src.frequency);
+      // ── 三個共振峰濾波器（模仿聲道形狀）──
+      const mkBP=(fkHz,Q)=>{const f=a.createBiquadFilter();f.type='bandpass';f.frequency.value=fkHz*1000;f.Q.value=Q;return f;};
+      const b1=mkBP(f1k,7),b2=mkBP(f2k,9),b3=mkBP(f3k,11);
+      // 氣息雜訊（增加人聲質感）
+      const nBuf=a.createBuffer(1,Math.ceil(a.sampleRate*len),a.sampleRate);
+      const nD=nBuf.getChannelData(0);for(let i=0;i<nD.length;i++)nD[i]=Math.random()*2-1;
+      const nSrc=a.createBufferSource();nSrc.buffer=nBuf;
+      const nF=mkBP(f2k*.8,3);const nG=a.createGain();nG.gain.value=.045;
+      nSrc.connect(nF);nF.connect(nG);
+      // 混合三個共振峰 + 氣息
+      const mx=a.createGain();mx.gain.value=.48;
+      src.connect(b1);b1.connect(mx);
+      src.connect(b2);b2.connect(mx);
+      src.connect(b3);b3.connect(mx);
+      // 音節包絡（緩入緩出）
+      const env=a.createGain();
+      const att=Math.min(.15,len*.18);
+      env.gain.setValueAtTime(0,t);
+      env.gain.linearRampToValueAtTime(.78,t+att);
+      env.gain.setValueAtTime(.78,t+len-att);
+      env.gain.linearRampToValueAtTime(0,t+len);
+      mx.connect(env);nG.connect(env);
+      emit(env,.92,.62);
+      src.start(t);lfo.start(t);nSrc.start(t);
+      src.stop(t+len+.1);lfo.stop(t+len+.1);nSrc.stop(t+len+.1);
+      oscs.push(src,lfo,nSrc);
+      t+=len+.12;totalDur+=len+.12;
+    });
+    _chantOscs=oscs;
+    _chantTimer=setTimeout(()=>_playChant(mantra),(totalDur+2.4)*1000);
   }
   function toggleChant(el){
     el.classList.toggle('on');
-    if(el.classList.contains('on')){
-      _chantActive=true;
-      if(_voices.length===0){setTimeout(_loadV,300);}
-      _doChant(currentMantra);
-    } else {
-      stopChant();el.classList.add('on');el.classList.remove('on');
-    }
+    if(el.classList.contains('on')){_chantActive=true;_playChant(currentMantra);}
+    else{stopChant();el.classList.add('on');el.classList.remove('on');}
   }
 
   // ========= 資料層 =========
@@ -790,6 +826,7 @@
   // ========= 修持狀態 =========
   const chantTextMap={
     '觀世音菩薩':'南無觀世音菩薩',
+    '六字大明咒':'唵 嘛 呢 叭 咪 吽',
     '唵嘛呢叭咪吽':'唵 嘛 呢 叭 咪 吽',
     '南無觀世音菩薩':'南無觀世音菩薩',
     '般若波羅蜜多心經':'觀自在菩薩，行深般若波羅蜜多時',
