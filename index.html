@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="theme-color" content="#0a1832">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="念念">
+<link rel="manifest" href="manifest.json">
+<title>念念</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a1832;
+    --bg-deep:#06112a;
+    --gold:#d6a85a;
+    --gold-soft:#a8843d;
+    --gold-dim:#5a4524;
+    --gold-glow:#f0c878;
+    --red:#7a1f2a;
+    --red-2:#5a151e;
+    --text:#e8d9b5;
+    --text-dim:#7a6f54;
+    --line:rgba(214,168,90,.22);
+    --line-soft:rgba(214,168,90,.1);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:#000;color:var(--text);font-family:"Noto Sans TC",sans-serif;font-weight:300;overscroll-behavior:none;letter-spacing:.02em}
+  body{display:flex;justify-content:center;min-height:100vh}
+  #app{
+    width:100%;max-width:430px;min-height:100vh;background:var(--bg);
+    position:relative;overflow:hidden;display:flex;flex-direction:column;
+    padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
+  }
+
+  .screen{display:none;flex:1;flex-direction:column;padding:14px 22px 110px;position:relative;z-index:1}
+  .screen.active{display:flex}
+
+  /* === header === */
+  .top{display:flex;align-items:center;justify-content:space-between;height:36px}
+  .icon-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--gold);cursor:pointer;position:relative}
+  .icon-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .dot-red{position:absolute;top:2px;right:2px;width:6px;height:6px;border-radius:50%;background:#e53935}
+
+  /* === logo block === */
+  .logo-wrap{display:flex;flex-direction:column;align-items:center;margin:10px 0 4px}
+  .logo{display:flex;align-items:flex-start;color:var(--gold)}
+  .logo svg{width:170px;height:auto;display:block}
+  .logo.sm svg{width:130px}
+
+  .subtitle{margin-top:18px;color:var(--gold);letter-spacing:10px;font-size:18px;font-weight:400;display:flex;align-items:center;gap:18px}
+  .subtitle::before,.subtitle::after{content:"";display:block;width:42px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-soft),transparent)}
+  .hint{color:var(--text-dim);font-size:12px;letter-spacing:4px;margin-top:8px}
+  .lotus-sep{margin-top:14px;display:flex;justify-content:center}
+  .lotus-sep svg{width:22px;height:14px;stroke:var(--gold);fill:none;stroke-width:1.2;opacity:.7}
+
+  /* === flat card === */
+  .card{
+    border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:18px;
+    position:relative;background:transparent
+  }
+  .card .watermark{position:absolute;opacity:.18;pointer-events:none}
+
+  /* === button === */
+  .btn{
+    width:100%;padding:16px;border-radius:32px;font-family:inherit;
+    font-size:17px;letter-spacing:8px;font-weight:400;
+    display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;
+    border:1px solid var(--gold)
+  }
+  .btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+  .btn-primary{background:var(--red);color:var(--text);margin-top:20px}
+  .btn-primary:active{background:var(--red-2)}
+  .btn-secondary{background:transparent;color:var(--gold);border-color:var(--gold-soft);margin-top:12px;letter-spacing:6px;font-size:15px}
+
+  /* === bottom tabs === */
+  .tabs{
+    position:absolute;bottom:0;left:0;right:0;
+    display:flex;justify-content:space-around;align-items:flex-start;
+    background:var(--bg-deep);
+    padding:12px 0 18px;padding-bottom:calc(18px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--line-soft);z-index:5
+  }
+  .tab{display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--text-dim);font-size:11px;letter-spacing:3px;cursor:pointer;padding:2px 6px;position:relative;font-weight:400}
+  .tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+  .tab.active{color:var(--gold)}
+  .tab.active::after{content:"";position:absolute;bottom:-4px;width:14px;height:1.5px;background:var(--gold)}
+
+  /* === home === */
+  .home-progress{display:flex;align-items:center;gap:16px}
+  .home-progress .left{flex:1}
+  .row{display:flex;align-items:center;gap:8px;color:var(--text-dim);font-size:12px;letter-spacing:3px}
+  .row svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .big{color:var(--gold);font-size:48px;font-weight:200;letter-spacing:1px;line-height:1;margin:8px 0}
+  .big .small{font-size:16px;color:var(--text-dim);letter-spacing:1px;margin-left:6px;font-weight:300}
+  .ring-sm{width:130px;height:130px;position:relative;flex-shrink:0}
+  .ring-sm svg.ring{position:absolute;inset:0;transform:rotate(-90deg)}
+  .ring-sm svg.lotus-c{position:absolute;inset:0;margin:auto;width:50px;height:50px;display:block}
+
+  .list-item{
+    display:flex;align-items:center;gap:14px;padding:14px 18px;border:1px solid var(--line);
+    border-radius:14px;margin-top:10px;background:transparent;cursor:pointer
+  }
+  .list-item .ico-wrap{
+    width:36px;height:36px;border-radius:50%;border:1px solid var(--gold-soft);
+    display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0
+  }
+  .list-item .ico-wrap svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+  .list-item .name{flex:1;color:var(--text);letter-spacing:4px;font-size:15px}
+  .list-item .chev{color:var(--gold-soft);font-size:18px}
+
+  .section-title{display:flex;justify-content:space-between;align-items:center;margin-top:26px;color:var(--gold);font-size:14px;letter-spacing:5px;font-weight:400}
+  .section-title .edit{color:var(--text-dim);font-size:12px;cursor:pointer;letter-spacing:3px}
+  .section-title .lotus-mini{display:inline-flex;align-items:center;gap:8px}
+  .section-title .lotus-mini svg{width:14px;height:10px;stroke:var(--gold);fill:none;stroke-width:1.2}
+
+  /* === practice === */
+  .pr-title{text-align:center;color:var(--gold);font-size:26px;letter-spacing:14px;margin-top:18px;font-weight:300;padding-left:14px}
+  .pr-target{text-align:center;color:var(--text-dim);font-size:12px;letter-spacing:4px;margin-top:8px}
+  .pr-ring{width:280px;height:280px;margin:28px auto 18px;position:relative;overflow:visible}
+  .pr-ring svg.outer{position:absolute;inset:0;transform:rotate(-90deg);overflow:visible}
+  .pr-ring svg{overflow:visible}
+  .pr-ring svg.mandala{position:absolute;inset:30px;opacity:.5;animation:mandala-spin 80s linear infinite}
+  .pr-ring .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .pr-ring .num{color:var(--gold-glow);font-size:78px;font-weight:200;line-height:1;
+    text-shadow:0 0 24px rgba(240,200,120,.35);animation:num-breathe 4s ease-in-out infinite}
+  .pr-ring .denom{color:var(--text-dim);font-size:14px;margin-top:6px;letter-spacing:3px}
+
+  /* arc 呼吸發光 */
+  #prArc{animation:arc-breathe 3.2s ease-in-out infinite}
+  /* tip 亮點 */
+  #prTip{fill:#fff5dc;filter:drop-shadow(0 0 6px #f0c878) drop-shadow(0 0 14px rgba(240,200,120,.9));
+    animation:tip-pulse 1.6s ease-in-out infinite}
+  /* tap 觸發的擴散圈 */
+  #prBurst{fill:none;stroke:var(--gold-glow);stroke-width:2;opacity:0;transform-origin:100px 100px}
+  #prBurst.go{animation:burst .65s ease-out}
+  /* 數字在 +1 時的閃光 */
+  .num.flash{animation:num-flash .5s ease-out}
+
+  @keyframes arc-breathe{
+    0%,100%{filter:drop-shadow(0 0 6px rgba(240,200,120,.5)) drop-shadow(0 0 14px rgba(240,200,120,.25))}
+    50%{filter:drop-shadow(0 0 12px rgba(240,200,120,.85)) drop-shadow(0 0 26px rgba(240,200,120,.55))}
+  }
+  @keyframes tip-pulse{
+    0%,100%{r:3.2}
+    50%{r:5}
+  }
+  @keyframes mandala-spin{ to{transform:rotate(360deg)} }
+  @keyframes num-breathe{
+    0%,100%{text-shadow:0 0 18px rgba(240,200,120,.3)}
+    50%{text-shadow:0 0 32px rgba(240,200,120,.65),0 0 60px rgba(240,200,120,.25)}
+  }
+  @keyframes num-flash{
+    0%{transform:scale(1);text-shadow:0 0 32px rgba(240,200,120,.9),0 0 70px rgba(240,200,120,.6)}
+    40%{transform:scale(1.12)}
+    100%{transform:scale(1);text-shadow:0 0 18px rgba(240,200,120,.3)}
+  }
+  @keyframes burst{
+    0%{opacity:.9;r:50;stroke-width:3}
+    100%{opacity:0;r:108;stroke-width:.5}
+  }
+
+  .chant-band{
+    margin:6px 0 18px;padding:20px;border:1px solid var(--line);border-radius:14px;
+    text-align:center;color:var(--gold);font-size:22px;letter-spacing:14px;font-weight:300;padding-left:34px
+  }
+  .chant-band .mini-lotus{display:flex;justify-content:center;margin-bottom:8px;padding-right:14px}
+
+  .switch-row{display:flex;padding:16px 4px;border:1px solid var(--line);border-radius:14px}
+  .switch-cell{display:flex;flex-direction:column;align-items:center;gap:10px;flex:1;position:relative}
+  .switch-cell + .switch-cell::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:1px;background:var(--line-soft)}
+  .switch-cell .label{display:flex;align-items:center;gap:6px;color:var(--text);font-size:13px;letter-spacing:3px}
+  .switch-cell .label svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.4}
+  .switch-cell.pickable .label{cursor:pointer;border-bottom:1px dashed var(--gold-soft);padding-bottom:2px}
+  .switch{
+    width:42px;height:22px;border-radius:14px;background:#15264a;border:1px solid var(--gold-soft);
+    position:relative;cursor:pointer;transition:background .2s
+  }
+  .switch::after{
+    content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
+    background:var(--gold-soft);transition:left .2s
+  }
+  .switch.on{background:var(--gold-soft)}
+  .switch.on::after{left:22px;background:#fff5dc}
+
+  /* === complete === */
+  .stat-row{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-top:1px solid var(--line-soft)}
+  .stat-row:first-of-type{border-top:none}
+  .stat-row .l{display:flex;align-items:center;gap:10px;color:var(--text-dim);font-size:13px;letter-spacing:3px}
+  .stat-row .l svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.4}
+  .stat-row .r{color:var(--gold);font-size:20px;font-weight:300}
+  .stat-row .r .u{font-size:12px;color:var(--text-dim);margin-left:4px;letter-spacing:2px}
+
+  /* === dedication === */
+  .ded-step{display:flex;gap:14px;padding:20px;border:1px solid var(--line);border-radius:16px;margin-top:14px;position:relative;overflow:hidden}
+  .ded-step .num{
+    width:48px;height:48px;border-radius:50%;border:1px solid var(--gold);color:var(--gold);font-size:18px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:300;position:relative;z-index:1
+  }
+  .ded-step .num svg.mandala-bg{position:absolute;inset:-6px;opacity:.5}
+  .ded-step .body{flex:1;position:relative;z-index:1}
+  .ded-step h4{margin:2px 0 8px;color:var(--gold);font-size:18px;letter-spacing:10px;font-weight:400}
+  .ded-step p.sub{color:var(--text-dim);font-size:12px;margin:0 0 12px;line-height:1.6;letter-spacing:2px}
+  .ded-step .divider{height:1px;background:var(--line-soft);margin:10px 0 12px}
+  .ded-step p.txt{color:var(--text);font-size:13.5px;line-height:1.9;margin:0;letter-spacing:2px}
+
+  /* === profile === */
+  .profile-head{display:flex;align-items:center;gap:14px;padding:8px 6px}
+  .profile-head .avatar{width:60px;height:60px;border-radius:50%;border:1px solid var(--gold-soft);display:flex;align-items:center;justify-content:center;color:var(--gold);background:transparent}
+  .profile-head .avatar svg{width:36px;height:36px;stroke:currentColor;fill:none;stroke-width:1.2}
+  .profile-head .name{color:var(--gold);font-size:17px;letter-spacing:4px;font-weight:400}
+  .profile-head .sub{color:var(--text-dim);font-size:12px;margin-top:6px;display:flex;align-items:center;gap:6px;letter-spacing:2px}
+  .profile-head .sub svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.4}
+
+  .donate-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  .donate{display:flex;align-items:center;gap:10px;padding:14px;border:1px solid var(--line);border-radius:14px;cursor:pointer}
+  .donate .ico{width:28px;height:28px;border-radius:50%;border:1px solid var(--gold-soft);display:flex;align-items:center;justify-content:center;color:var(--gold)}
+  .donate .ico svg{width:14px;height:10px;stroke:currentColor;fill:none;stroke-width:1.2}
+  .donate .price{color:var(--gold);letter-spacing:2px;font-size:14px}
+
+  .perks{display:flex;gap:18px;align-items:center;padding:18px;border:1px solid var(--line);border-radius:14px;margin-top:16px}
+  .perks .perk-icon{width:54px;height:54px;flex-shrink:0;color:var(--gold);opacity:.7}
+  .perks ul{margin:0;padding:0;list-style:none;flex:1}
+  .perks li{padding:5px 0;color:var(--text);font-size:13px;display:flex;align-items:center;gap:10px;letter-spacing:3px}
+  .perks li svg{width:14px;height:14px;stroke:var(--gold);fill:none;stroke-width:1.6;flex-shrink:0}
+
+  /* === library 法藏 === */
+  .lib-tab{display:flex;gap:8px;margin-top:18px;overflow-x:auto;padding-bottom:4px}
+  .lib-tab .chip{padding:6px 14px;border:1px solid var(--gold-soft);color:var(--gold-soft);font-size:12px;letter-spacing:3px;border-radius:20px;white-space:nowrap;cursor:pointer}
+  .lib-tab .chip.active{background:rgba(214,168,90,.1);color:var(--gold)}
+
+  .lib-card{
+    margin-top:12px;padding:18px;border:1px solid var(--line);border-radius:14px;
+    display:flex;gap:14px;align-items:flex-start;cursor:pointer
+  }
+  .lib-card .ico{width:42px;height:42px;border-radius:10px;border:1px solid var(--gold-soft);display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0}
+  .lib-card .ico svg{width:22px;height:16px;stroke:currentColor;fill:none;stroke-width:1.3}
+  .lib-card h4{margin:0;color:var(--gold);font-size:16px;letter-spacing:4px;font-weight:400}
+  .lib-card p{margin:6px 0 0;color:var(--text-dim);font-size:12px;line-height:1.6;letter-spacing:1px}
+  .lib-card .add{align-self:center;color:var(--gold);border:1px solid var(--gold-soft);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:300}
+
+  /* === records === */
+  .rec-day{margin-top:18px}
+  .rec-day-head{display:flex;justify-content:space-between;align-items:center;color:var(--gold);font-size:14px;letter-spacing:4px;padding:0 4px 10px;border-bottom:1px solid var(--line-soft)}
+  .rec-day-head .meta{color:var(--text-dim);font-size:12px;letter-spacing:2px}
+  .rec-item{display:flex;align-items:center;gap:14px;padding:14px 12px;border-bottom:1px solid var(--line-soft)}
+  .rec-item:last-child{border-bottom:none}
+  .rec-item .badge{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0}
+  .rec-item .badge.pending{background:#e26a4a}
+  .rec-item .info{flex:1}
+  .rec-item .info .name{color:var(--text);font-size:15px;letter-spacing:3px}
+  .rec-item .info .sub{color:var(--text-dim);font-size:12px;letter-spacing:1px;margin-top:4px}
+  .rec-item .cnt{color:var(--gold);font-size:18px;font-weight:300}
+  .rec-item .cnt .u{font-size:11px;color:var(--text-dim);margin-left:2px}
+  .rec-empty{text-align:center;color:var(--text-dim);font-size:13px;letter-spacing:3px;padding:60px 20px;line-height:2}
+
+  /* === modal === */
+  .modal-mask{position:absolute;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;z-index:50}
+  .modal-mask.show{display:flex}
+  .modal{width:100%;background:var(--bg-deep);border-top:1px solid var(--gold-soft);border-radius:20px 20px 0 0;padding:20px 18px 32px}
+  .modal h3{margin:0 0 14px;color:var(--gold);text-align:center;letter-spacing:6px;font-weight:400;font-size:16px}
+  .modal .opt{padding:14px 16px;border-radius:12px;border:1px solid var(--line);margin-top:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:var(--text);font-size:14px;letter-spacing:3px}
+  .modal .opt.active{border-color:var(--gold);color:var(--gold)}
+  .modal .opt .right{color:var(--text-dim);font-size:12px;letter-spacing:2px}
+</style>
+</head>
+<body>
+
+<!-- ========================================= -->
+<!-- ===========  SVG asset library  ========= -->
+<!-- ========================================= -->
+<svg width="0" height="0" style="position:absolute" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 念念 LOGO（原始官方檔案）-->
+    <symbol id="logo-full" viewBox="0 0 307.56 158.22">
+      <g fill="none" stroke="#ebab63" stroke-width="2" stroke-miterlimit="10">
+        <path d="M21.11,71.56A300.39,300.39,0,0,0,60.84,38.5a13.34,13.34,0,0,1,18.79,0,427.24,427.24,0,0,0,38.15,33.09"/>
+        <line x1="57.11" y1="62.89" x2="83.56" y2="62.89"/>
+        <polyline points="47.78 77.56 90.67 77.56 71.33 97.11"/>
+        <line x1="21.11" y1="104.67" x2="21.11" y2="132.44"/>
+        <path d="M39.11,104.67v21.55a6.22,6.22,0,0,0,6.22,6.22H94.67a6.22,6.22,0,0,0,6.22-6.22V104.67"/>
+        <line x1="64.89" y1="110.89" x2="72" y2="118.56"/>
+        <line x1="117.78" y1="104.67" x2="117.78" y2="132.44"/>
+        <path d="M156.81,71.56A301.12,301.12,0,0,0,196.55,38.5a13.33,13.33,0,0,1,18.78,0,427.24,427.24,0,0,0,38.15,33.09"/>
+        <line x1="192.81" y1="62.89" x2="219.26" y2="62.89"/>
+        <polyline points="183.48 77.56 226.37 77.56 207.04 97.11"/>
+        <line x1="156.81" y1="104.67" x2="156.81" y2="132.44"/>
+        <path d="M174.81,104.67v21.55a6.22,6.22,0,0,0,6.23,6.22h49.33a6.21,6.21,0,0,0,6.22-6.22V104.67"/>
+        <line x1="200.59" y1="110.89" x2="207.7" y2="118.56"/>
+        <line x1="253.48" y1="104.67" x2="253.48" y2="132.44"/>
+      </g>
+      <rect x="276" y="80.44" width="18.44" height="40.33" rx="8.5" fill="none" stroke="#8b1b27" stroke-miterlimit="10"/>
+      <path fill="#8b1b27" d="M281.16,98.31a.33.33,0,0,1-.29.36h-.14a.34.34,0,0,1-.31-.28V88.83a1.11,1.11,0,0,1,1.12-1.12h2.08a1.08,1.08,0,0,1,1,.55,1.06,1.06,0,0,1,.16.56v2.26a1,1,0,0,1-.58,1,1.1,1.1,0,0,1-.55.14h-2.45ZM284,89.59v-.76a.33.33,0,0,0-.24-.34l-.15,0h-2.07a.33.33,0,0,0-.34.25l0,.15v.74Zm-2.83.75v1.12h2.45a.34.34,0,0,0,.35-.23l0-.16v-.73Zm2.1,4.49a1,1,0,0,1,.54-1,1.2,1.2,0,0,1,.57-.14h1.8a1,1,0,0,1,.95.55,1,1,0,0,1,.16.57v.91a1.05,1.05,0,0,1-.54.95h0v0a1.26,1.26,0,0,1-.57.14H284.4a1,1,0,0,1-1-.56.91.91,0,0,1-.18-.56v-.93Zm3.28,0a.32.32,0,0,0-.25-.34l-.14,0h-1.78a.33.33,0,0,0-.33.21l0,.18v.9a.35.35,0,0,0,.25.35l.15,0h1.75a.33.33,0,0,0,.34-.24l0-.16Zm.39-2.64a1.08,1.08,0,0,1-1-.59l0,0v0a1,1,0,0,1-.11-.47V88.83a1.07,1.07,0,0,1,.57-1,1.13,1.13,0,0,1,.56-.13H289a1.05,1.05,0,0,1,1,.55,1,1,0,0,1,.15.56v8.33c0,1.14-.55,1.71-1.6,1.71a3.27,3.27,0,0,1-.59,0,.29.29,0,0,1-.3-.26l0-.08v0h0a.4.4,0,0,1,0-.16.36.36,0,0,1,.27-.21h.38c.71,0,1.07-.3,1.07-.9v-5Zm2.44-2.62v-.76a.33.33,0,0,0-.24-.34l-.15,0h-2.05a.33.33,0,0,0-.34.25l0,.15v.74Zm-2.82.75v.74a.35.35,0,0,0,.24.36l.15,0h2.43V90.34Z"/>
+      <path fill="#8b1b27" d="M281.41,106.64h0v.06a10.89,10.89,0,0,1-1.49,4.14l0,.06a.31.31,0,0,1-.24.12.28.28,0,0,1-.15,0l-.06,0-.11-.1a.32.32,0,0,1-.09-.21.42.42,0,0,1,0-.15v0a10.61,10.61,0,0,0,1.39-3.88.3.3,0,0,1,.34-.28h.06a.33.33,0,0,1,.13,0A.31.31,0,0,1,281.41,106.64ZM283.2,104h.17a.31.31,0,0,1,.28.23l0,0v8.37c0,.09,0,.13.12.13h3.69l.06-.06,0-.08.25-2.69a.34.34,0,0,1,.32-.32h.14a.34.34,0,0,1,.29.3h0v0l-.26,2.7a.83.83,0,0,1-.93.82H283.8a.77.77,0,0,1-.87-.87v-8.29A.34.34,0,0,1,283.2,104Zm.9-1.75a.56.56,0,0,1,.11-.11.39.39,0,0,1,.2-.06l.15,0h0l.05,0a10,10,0,0,1,2.63,2.81.75.75,0,0,1,.05.16v0a.32.32,0,0,1-.18.28h0a.52.52,0,0,1-.22.06.32.32,0,0,1-.27-.13h0v0a9.25,9.25,0,0,0-2.41-2.58h0v0l-.06-.06a.31.31,0,0,1-.08-.21.7.7,0,0,1,0-.14s0,0,0,0v0Zm4,4.15.16-.12h.13a.37.37,0,0,1,.22.09l0,0a12,12,0,0,1,2.55,4.11h0s0,.08,0,.11a.3.3,0,0,1-.18.29l0,0h0l-.17,0a.33.33,0,0,1-.31-.2v0a11.53,11.53,0,0,0-2.36-3.81l0,0-.06-.07a.31.31,0,0,1,0-.34l0,0Z"/>
+    </symbol>
+
+    <!-- 蓮花（小，分隔用）-->
+    <symbol id="lotus" viewBox="0 0 22 14">
+      <g fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 11 12 Q 11 2 11 2"/>
+        <path d="M 11 12 Q 5 8 3 4"/>
+        <path d="M 11 12 Q 17 8 19 4"/>
+        <path d="M 11 12 Q 8 9 6 6"/>
+        <path d="M 11 12 Q 14 9 16 6"/>
+      </g>
+    </symbol>
+
+    <!-- 曼陀羅（大，watermark / 環內裝飾）-->
+    <symbol id="mandala" viewBox="0 0 100 100">
+      <g fill="none" stroke="currentColor" stroke-width=".6" stroke-linecap="round">
+        <circle cx="50" cy="50" r="48"/>
+        <circle cx="50" cy="50" r="36" opacity=".7"/>
+        <circle cx="50" cy="50" r="22" opacity=".5"/>
+        <!-- 12 條輻射線 -->
+        <g opacity=".7">
+          <line x1="50" y1="2" x2="50" y2="98"/>
+          <line x1="2" y1="50" x2="98" y2="50"/>
+          <line x1="16" y1="16" x2="84" y2="84"/>
+          <line x1="84" y1="16" x2="16" y2="84"/>
+          <line x1="50" y1="2" x2="26" y2="98" opacity=".5"/>
+          <line x1="50" y1="2" x2="74" y2="98" opacity=".5"/>
+          <line x1="2" y1="50" x2="98" y2="74" opacity=".5"/>
+          <line x1="2" y1="50" x2="98" y2="26" opacity=".5"/>
+        </g>
+        <!-- 內接 12 角星 -->
+        <polygon points="50,10 56,38 84,30 64,50 84,70 56,62 50,90 44,62 16,70 36,50 16,30 44,38" opacity=".6"/>
+        <!-- 中央小蓮花 -->
+        <g transform="translate(50 50)">
+          <ellipse cx="0" cy="0" rx="6" ry="3"/>
+          <path d="M -4 -1 Q 0 -8 4 -1" />
+          <path d="M -8 1 Q -4 -4 0 -1"/>
+          <path d="M 8 1 Q 4 -4 0 -1"/>
+        </g>
+      </g>
+    </symbol>
+
+    <!-- icons -->
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0v5l2 3H4l2-3zM10 19a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c2 4 5 6 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3-1-3 0-6 1-9z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l10-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></symbol>
+    <symbol id="i-buddha" viewBox="0 0 24 24"><circle cx="12" cy="9" r="4"/><path d="M12 5v-2M9 13c-2 1-3 3-3 5h12c0-2-1-4-3-5"/></symbol>
+    <symbol id="i-wheel" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6M5 5l4 4M15 15l4 4M19 5l-4 4M9 15l-5 4"/></symbol>
+    <!-- tab -->
+    <symbol id="t-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="t-practice" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="t-library" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 1-2-2zM13 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5z"/></symbol>
+    <symbol id="t-records" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></symbol>
+    <symbol id="t-profile" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <!-- sound icons -->
+    <symbol id="i-wood" viewBox="0 0 24 24"><ellipse cx="12" cy="14" rx="9" ry="6"/><path d="M12 8v-2M9 6l-1-2M15 6l1-2"/></symbol>
+    <symbol id="i-bell-2" viewBox="0 0 24 24"><path d="M7 10a5 5 0 0 1 10 0v4l2 3H5l2-3zM10 19a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="9" r="3"/><path d="M5 21a7 7 0 0 1 14 0"/></symbol>
+  </defs>
+</svg>
+
+<div id="app">
+
+  <!-- ============= 首頁 ============= -->
+  <div class="screen active" data-screen="home">
+    <div class="top"><div class="icon-btn"></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="logo-wrap">
+      <div class="logo"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
+      <div class="subtitle">每日修持</div>
+      <div class="lotus-sep"><svg><use href="#lotus"/></svg></div>
+    </div>
+
+    <div class="card">
+      <div class="home-progress">
+        <div class="left">
+          <div class="row"><svg><use href="#i-calendar"/></svg>今日修持</div>
+          <div class="big"><span id="homeToday">0</span><span class="small">遍</span></div>
+          <div class="row" style="margin-top:8px"><svg><use href="#i-flame"/></svg>連續 <span id="homeStreak" style="color:var(--gold);font-size:18px;margin:0 4px">0</span> 天</div>
+          <div class="row" style="margin-top:8px" id="homePending"></div>
+        </div>
+        <div class="ring-sm">
+          <svg class="ring" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(214,168,90,.12)" stroke-width="2"/>
+            <circle id="homeArc" cx="60" cy="60" r="52" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"
+              stroke-dasharray="326" stroke-dashoffset="326" style="filter:drop-shadow(0 0 6px rgba(240,200,120,.5))"/>
+          </svg>
+          <svg class="lotus-c" style="color:var(--gold);opacity:.55"><use href="#mandala"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="startPractice('南無阿彌陀佛')"><svg><use href="#lotus"/></svg>開始修持</button>
+
+    <div class="section-title">
+      <span class="lotus-mini"><svg><use href="#lotus"/></svg>常用修持</span>
+      <span class="edit">編輯 ›</span>
+    </div>
+    <div class="list-item" onclick="startPractice('南無阿彌陀佛')"><div class="ico-wrap"><svg><use href="#i-wheel"/></svg></div><div class="name">南無阿彌陀佛</div><div class="chev">›</div></div>
+    <div class="list-item" onclick="startPractice('觀世音菩薩')"><div class="ico-wrap"><svg><use href="#i-buddha"/></svg></div><div class="name">觀世音菩薩</div><div class="chev">›</div></div>
+    <div class="list-item" onclick="startPractice('六字大明咒')"><div class="ico-wrap"><svg><use href="#i-doc"/></svg></div><div class="name">六字大明咒</div><div class="chev">›</div></div>
+
+    <div class="card" style="margin-top:22px">
+      <div style="display:flex;justify-content:space-around;align-items:center">
+        <div style="text-align:center;flex:1">
+          <div class="row" style="justify-content:center">本週總修持</div>
+          <div class="big" style="font-size:30px;margin-top:6px"><span id="homeWeek">0</span><span class="small">遍</span></div>
+        </div>
+        <div style="width:1px;align-self:stretch;background:var(--line-soft)"></div>
+        <div style="text-align:center;flex:1">
+          <div class="row" style="justify-content:center"><svg><use href="#i-clock"/></svg>今日時長</div>
+          <div class="big" style="font-size:30px;margin-top:6px"><span id="homeMinutes">0</span><span class="small">分鐘</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============= 修持中 ============= -->
+  <div class="screen" data-screen="practice">
+    <div class="top"><div class="icon-btn" onclick="go('home')"><svg><use href="#i-back"/></svg></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="logo-wrap">
+      <div class="logo sm"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
+      <div class="lotus-sep" style="margin-top:8px"><svg><use href="#lotus"/></svg></div>
+    </div>
+
+    <div class="pr-title" id="prTitle">南無阿彌陀佛</div>
+    <div class="pr-target">今日目標 108 遍</div>
+
+    <div class="pr-ring">
+      <svg class="mandala" style="color:var(--gold);opacity:.4"><use href="#mandala"/></svg>
+      <svg class="outer" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="92" fill="none" stroke="rgba(214,168,90,.15)" stroke-width="2"/>
+        <circle id="prArc" cx="100" cy="100" r="92" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round"
+          stroke-dasharray="578" stroke-dashoffset="578"/>
+        <circle id="prTip" cx="192" cy="100" r="3.5"/>
+        <circle id="prBurst" cx="100" cy="100" r="50"/>
+      </svg>
+      <div class="center">
+        <div class="num" id="prCount">0</div>
+        <div class="denom">/ 108</div>
+      </div>
+    </div>
+
+    <div class="chant-band">
+      <div class="mini-lotus"><svg style="width:18px;height:12px;stroke:var(--gold);fill:none;stroke-width:1.2"><use href="#lotus"/></svg></div>
+      <span id="prChant">南無阿彌陀佛</span>
+    </div>
+
+    <div class="switch-row">
+      <div class="switch-cell pickable">
+        <div class="label" id="soundLabel" onclick="openSoundPicker()"><svg><use href="#i-wood"/></svg>木魚 ▾</div>
+        <div class="switch on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="switch-cell">
+        <div class="label"><svg><use href="#i-bell-2"/></svg>引磬</div>
+        <div class="switch on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="switch-cell">
+        <div class="label"><svg><use href="#i-person"/></svg>跟念</div>
+        <div class="switch" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="tapBtn"><svg><use href="#lotus"/></svg>輕觸 +1</button>
+    <button class="btn btn-secondary" onclick="finishPractice()">完成此次修持</button>
+  </div>
+
+  <!-- ============= 修持完成 ============= -->
+  <div class="screen" data-screen="complete">
+    <div class="top"><div class="icon-btn" onclick="go('practice')"><svg><use href="#i-back"/></svg></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="logo-wrap">
+      <div class="logo"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
+      <div class="subtitle">修持完成</div>
+      <div class="hint">隨喜您的精進修持</div>
+      <div class="lotus-sep"><svg><use href="#lotus"/></svg></div>
+    </div>
+
+    <div class="card">
+      <div style="text-align:center">
+        <div id="cmpMantra" style="color:var(--gold);font-size:22px;letter-spacing:10px;font-weight:300;padding-left:10px">南無阿彌陀佛</div>
+        <div class="big" style="font-size:68px;margin:18px 0 6px"><span id="cmpCount">0</span><span class="small" style="font-size:22px">/ 108</span></div>
+        <div id="cmpStatus" style="color:var(--gold);letter-spacing:6px;font-size:14px">已圓滿</div>
+      </div>
+      <div class="stat-row" style="margin-top:18px"><div class="l"><svg><use href="#i-clock"/></svg>本次用時</div><div class="r"><span id="cmpDuration">0</span><span class="u">分</span></div></div>
+      <div class="stat-row"><div class="l"><svg><use href="#i-calendar"/></svg>完成時間</div><div class="r" id="cmpTime">--:--</div></div>
+    </div>
+
+    <div id="cmpPending" style="text-align:center;color:var(--text-dim);font-size:13px;margin-top:14px;letter-spacing:2px"></div>
+    <button class="btn btn-primary" onclick="saveCurrentAndGoDedication()"><svg><use href="#lotus"/></svg>前往三段式迴向</button>
+    <button class="btn btn-secondary" onclick="saveCurrentRecord()">儲存修持紀錄</button>
+  </div>
+
+  <!-- ============= 三段式迴向 ============= -->
+  <div class="screen" data-screen="dedication">
+    <div class="top"><div class="icon-btn" onclick="go('complete')"><svg><use href="#i-back"/></svg></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="logo-wrap">
+      <div class="logo sm"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
+      <div class="subtitle" style="font-size:24px;letter-spacing:14px">三段式迴向</div>
+      <div class="hint">依序完成 ︰ 槓桿 → 還債 → 投資</div>
+      <div class="lotus-sep"><svg><use href="#lotus"/></svg></div>
+    </div>
+
+    <div id="dedSummary" style="margin-top:14px;padding:12px 16px;border:1px dashed var(--gold-soft);border-radius:12px;color:var(--gold);font-size:13px;letter-spacing:2px;text-align:center;line-height:1.7"></div>
+
+    <div class="ded-step">
+      <div class="num"><svg class="mandala-bg" style="color:var(--gold)"><use href="#mandala"/></svg>1</div>
+      <div class="body">
+        <h4>槓 桿</h4>
+        <p class="sub">先將本次修持功德回向供養諸佛菩薩，以作倍化。</p>
+        <div class="divider"></div>
+        <p class="txt" id="dedText1">我將今日所持咒的一切功德，回向供養諸佛菩薩。</p>
+      </div>
+    </div>
+    <div class="ded-step">
+      <div class="num"><svg class="mandala-bg" style="color:var(--gold)"><use href="#mandala"/></svg>2</div>
+      <div class="body">
+        <h4>還 債</h4>
+        <p class="sub">再以此功德，回向障礙四大基數的已現前冤親債主。</p>
+        <div class="divider"></div>
+        <p class="txt">再以此功德，回向目前障礙我運勢、財運、<br>福報、財庫四大基數的所有已現前冤親債主，<br>跟我解冤釋結、往生淨土。</p>
+      </div>
+    </div>
+    <div class="ded-step">
+      <div class="num"><svg class="mandala-bg" style="color:var(--gold)"><use href="#mandala"/></svg>3</div>
+      <div class="body">
+        <h4>投 資</h4>
+        <p class="sub">最後再回向自身四大基數增長。</p>
+        <div class="divider"></div>
+        <p class="txt">再以此功德，回向我的運勢、財運、<br>福報、財庫大量增長，吉祥順利。</p>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="completeDedication()"><svg><use href="#lotus"/></svg>完成迴向</button>
+    <button class="btn btn-secondary">儲存為預設模板</button>
+  </div>
+
+  <!-- ============= 法藏 ============= -->
+  <div class="screen" data-screen="library">
+    <div class="top"><div class="icon-btn"></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="logo-wrap">
+      <div class="logo"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
+      <div class="subtitle">法 藏</div>
+      <div class="hint">經咒典藏 ・ 隨選修持</div>
+      <div class="lotus-sep"><svg><use href="#lotus"/></svg></div>
+    </div>
+
+    <div class="lib-tab">
+      <div class="chip active">全部</div>
+      <div class="chip">佛號</div>
+      <div class="chip">咒語</div>
+      <div class="chip">經文</div>
+      <div class="chip">迴向文</div>
+    </div>
+
+    <div class="lib-card"><div class="ico"><svg><use href="#lotus"/></svg></div><div style="flex:1"><h4>南無阿彌陀佛</h4><p>淨土法門根本佛號，攝受念佛人往生極樂。</p></div><div class="add">+</div></div>
+    <div class="lib-card"><div class="ico"><svg><use href="#i-buddha"/></svg></div><div style="flex:1"><h4>觀世音菩薩聖號</h4><p>大慈大悲，尋聲救苦。</p></div><div class="add">+</div></div>
+    <div class="lib-card"><div class="ico"><svg><use href="#i-wheel"/></svg></div><div style="flex:1"><h4>六字大明咒</h4><p>唵嘛呢叭咪吽 ・ 觀音心咒。</p></div><div class="add">+</div></div>
+    <div class="lib-card"><div class="ico"><svg><use href="#i-doc"/></svg></div><div style="flex:1"><h4>大悲咒</h4><p>觀世音菩薩廣大圓滿無礙大悲心陀羅尼。</p></div><div class="add">+</div></div>
+    <div class="lib-card"><div class="ico"><svg><use href="#i-doc"/></svg></div><div style="flex:1"><h4>般若波羅蜜多心經</h4><p>觀自在菩薩，行深般若波羅蜜多時…</p></div><div class="add">+</div></div>
+    <div class="lib-card"><div class="ico"><svg><use href="#lotus"/></svg></div><div style="flex:1"><h4>準提神咒</h4><p>稽首皈依蘇悉帝，頭面頂禮七俱胝…</p></div><div class="add">+</div></div>
+  </div>
+
+  <!-- ============= 記錄 ============= -->
+  <div class="screen" data-screen="records">
+    <div class="top"><div class="icon-btn"></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="logo-wrap">
+      <div class="logo"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
+      <div class="subtitle">修持記錄</div>
+      <div class="lotus-sep"><svg><use href="#lotus"/></svg></div>
+    </div>
+
+    <div id="recordsList"></div>
+  </div>
+
+  <!-- ============= 我的 ============= -->
+  <div class="screen" data-screen="profile">
+    <div class="top"><div class="icon-btn"></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="logo-wrap">
+      <div class="logo"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
+      <div class="subtitle">我 的</div>
+      <div class="lotus-sep"><svg><use href="#lotus"/></svg></div>
+    </div>
+
+    <div class="card" style="padding:8px">
+      <div class="profile-head">
+        <div class="avatar"><svg><use href="#i-buddha"/></svg></div>
+        <div style="flex:1">
+          <div class="name">每日修持者</div>
+          <div class="sub"><svg><use href="#i-flame"/></svg>已連續修持 <span style="color:var(--gold)">5</span> 天</div>
+        </div>
+        <div style="color:var(--gold-soft);font-size:20px">›</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="justify-content:center"><span style="display:flex;align-items:center;gap:14px"><span style="width:30px;height:1px;background:var(--gold-soft)"></span>隨喜支持<span style="width:30px;height:1px;background:var(--gold-soft)"></span></span></div>
+    <div class="donate-grid">
+      <div class="donate"><div class="ico"><svg><use href="#lotus"/></svg></div><div class="price">NT$ 30</div></div>
+      <div class="donate"><div class="ico"><svg><use href="#lotus"/></svg></div><div class="price">NT$ 90</div></div>
+      <div class="donate"><div class="ico"><svg><use href="#lotus"/></svg></div><div class="price">NT$ 150</div></div>
+      <div class="donate"><div class="ico"><svg><use href="#i-wheel"/></svg></div><div class="price">每月支持方案 ›</div></div>
+    </div>
+
+    <div class="perks">
+      <svg class="perk-icon" viewBox="0 0 100 100" style="stroke:currentColor;fill:none;stroke-width:.8"><use href="#mandala"/></svg>
+      <ul>
+        <li><svg><use href="#i-check"/></svg>解鎖更多音色</li>
+        <li><svg><use href="#i-check"/></svg>支持後續功能更新</li>
+        <li><svg><use href="#i-check"/></svg>保留簡潔體驗</li>
+      </ul>
+    </div>
+
+    <button class="btn btn-primary"><svg><use href="#lotus"/></svg>立即支持</button>
+
+    <div class="card" style="padding:0 14px;margin-top:14px">
+      <div class="list-item" style="border:none;border-bottom:1px solid var(--line-soft);border-radius:0;margin:0;padding:14px 4px"><div class="ico-wrap" style="border:none;width:24px;height:24px"><svg style="width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:1.4"><use href="#i-bell"/></svg></div><div class="name">通知設定</div><div class="chev">›</div></div>
+      <div class="list-item" style="border:none;border-bottom:1px solid var(--line-soft);border-radius:0;margin:0;padding:14px 4px" onclick="openSoundPicker()"><div class="ico-wrap" style="border:none;width:24px;height:24px"><svg style="width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:1.4"><use href="#i-music"/></svg></div><div class="name">音色設定</div><div class="chev">›</div></div>
+      <div class="list-item" style="border:none;border-radius:0;margin:0;padding:14px 4px"><div class="ico-wrap" style="border:none;width:24px;height:24px"><svg style="width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:1.4"><use href="#i-doc"/></svg></div><div class="name">迴向模板</div><div class="chev">›</div></div>
+    </div>
+  </div>
+
+  <!-- ============= tabs ============= -->
+  <div class="tabs">
+    <div class="tab active" data-tab="home" onclick="go('home')"><svg><use href="#t-home"/></svg>首頁</div>
+    <div class="tab" data-tab="practice" onclick="go('practice')"><svg><use href="#t-practice"/></svg>修持</div>
+    <div class="tab" data-tab="library" onclick="go('library')"><svg><use href="#t-library"/></svg>法藏</div>
+    <div class="tab" data-tab="records" onclick="go('records')"><svg><use href="#t-records"/></svg>記錄</div>
+    <div class="tab" data-tab="profile" onclick="go('profile')"><svg><use href="#t-profile"/></svg>我的</div>
+  </div>
+
+  <!-- 音色選擇 -->
+  <div class="modal-mask" id="soundModal" onclick="if(event.target===this)this.classList.remove('show')">
+    <div class="modal">
+      <h3>選擇敲擊音色</h3>
+      <div class="opt active" data-sound="wood">木魚<span class="right">清脆木音</span></div>
+      <div class="opt" data-sound="bell">銅鐘<span class="right">長音迴盪</span></div>
+      <div class="opt" data-sound="qing">引磬<span class="right">高頻清音</span></div>
+      <div class="opt" data-sound="bowl">頌缽<span class="right">悠長共鳴</span></div>
+      <div class="opt" data-sound="silent">靜音<span class="right">只有震動</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function go(name){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.dataset.screen===name));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+    haptic(15);
+  }
+  function haptic(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
+
+  let ac;
+  function audio(){ if(!ac) ac = new (window.AudioContext||window.webkitAudioContext)(); return ac; }
+  const sounds = {
+    wood(){const a=audio(),t=a.currentTime;const o=a.createOscillator(),g=a.createGain(),f=a.createBiquadFilter();
+      o.type='triangle';o.frequency.setValueAtTime(380,t);o.frequency.exponentialRampToValueAtTime(140,t+.08);
+      f.type='lowpass';f.frequency.value=1800;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.7,t+.005);g.gain.exponentialRampToValueAtTime(.001,t+.18);
+      o.connect(f);f.connect(g);g.connect(a.destination);o.start(t);o.stop(t+.2);},
+    bell(){const a=audio(),t=a.currentTime;[1,2.7,5.4].forEach((m,i)=>{const o=a.createOscillator(),g=a.createGain();
+      o.type='sine';o.frequency.value=240*m;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.25/(i+1),t+.01);g.gain.exponentialRampToValueAtTime(.001,t+2.5);
+      o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+2.6);});},
+    qing(){const a=audio(),t=a.currentTime;const o=a.createOscillator(),g=a.createGain();
+      o.type='sine';o.frequency.value=1760;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.35,t+.005);g.gain.exponentialRampToValueAtTime(.001,t+1.2);
+      o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+1.3);},
+    bowl(){const a=audio(),t=a.currentTime;[196,294].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();
+      o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.2,t+.1);g.gain.exponentialRampToValueAtTime(.001,t+3);
+      o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+3.1);});},
+    silent(){}
+  };
+  let currentSound='wood';
+  function openSoundPicker(){document.getElementById('soundModal').classList.add('show');}
+  document.querySelectorAll('#soundModal .opt').forEach(el=>{
+    el.onclick=()=>{
+      currentSound=el.dataset.sound;
+      document.querySelectorAll('#soundModal .opt').forEach(o=>o.classList.toggle('active',o===el));
+      const name=el.firstChild.textContent.trim();
+      document.getElementById('soundLabel').innerHTML='<svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.4"><use href="#i-wood"/></svg>'+name+' ▾';
+      sounds[currentSound]?.();haptic(20);
+      setTimeout(()=>document.getElementById('soundModal').classList.remove('show'),400);
+    };
+  });
+
+  // ========= 資料層 =========
+  const STORE='nn.sessions';
+  const loadSessions=()=>{try{return JSON.parse(localStorage.getItem(STORE))||[]}catch{return[]}};
+  const saveSessions=a=>localStorage.setItem(STORE,JSON.stringify(a));
+  const todayStart=()=>{const d=new Date();d.setHours(0,0,0,0);return d.getTime()};
+  const weekStart=()=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay());return d.getTime()};
+  const todayAll=()=>loadSessions().filter(s=>s.endTime>=todayStart());
+  const todayPending=()=>todayAll().filter(s=>!s.dedicated);
+  const pad=n=>n<10?'0'+n:n;
+  const fmtTime=t=>{const d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes())};
+  const fmtDate=t=>{const d=new Date(t);return d.getFullYear()+'/'+pad(d.getMonth()+1)+'/'+pad(d.getDate())};
+
+  // ========= 修持狀態 =========
+  let currentMantra='南無阿彌陀佛';
+  let practiceStart=null;
+  let count=0,target=108;
+  const arcLen=578,R=92,CX=100,CY=100;
+
+  function startPractice(mantra){
+    currentMantra=mantra;
+    count=0;
+    practiceStart=Date.now();
+    document.getElementById('prTitle').textContent=mantra;
+    document.getElementById('prChant').textContent=mantra;
+    updatePr();
+    go('practice');
+  }
+
+  function updatePr(){
+    document.getElementById('prCount').textContent=count;
+    document.getElementById('prArc').setAttribute('stroke-dashoffset',arcLen*(1-count/target));
+    const a=2*Math.PI*count/target;
+    const tip=document.getElementById('prTip');
+    tip.setAttribute('cx',CX+R*Math.cos(a));
+    tip.setAttribute('cy',CY+R*Math.sin(a));
+    if(count>=target) setTimeout(()=>finishPractice(true),700);
+  }
+  function tap(){
+    if(count<target){count++;updatePr();}
+    sounds[currentSound]?.();haptic(40);
+    const b=document.getElementById('prBurst');
+    b.classList.remove('go');void b.offsetWidth;b.classList.add('go');
+    const n=document.getElementById('prCount');
+    n.classList.remove('flash');void n.offsetWidth;n.classList.add('flash');
+  }
+  document.getElementById('tapBtn').addEventListener('click',tap);
+  document.querySelector('.pr-ring').addEventListener('click',tap);
+
+  // ========= 暫存當下這次修持 =========
+  let _pending=null;
+  function finishPractice(autoFull=false){
+    if(count<=0 && !autoFull){ go('home'); return; }
+    const end=Date.now();
+    _pending={
+      id:end,mantra:currentMantra,count,target,
+      startTime:practiceStart||end,endTime:end,
+      duration:Math.max(1,Math.round((end-(practiceStart||end))/60000)),
+      dedicated:false,dedicatedAt:null
+    };
+    document.getElementById('cmpMantra').textContent=_pending.mantra;
+    document.getElementById('cmpCount').textContent=_pending.count;
+    document.getElementById('cmpStatus').textContent=_pending.count>=target?'已圓滿':'已暫停';
+    document.getElementById('cmpDuration').textContent=_pending.duration;
+    document.getElementById('cmpTime').textContent=fmtTime(_pending.endTime);
+    const pendingCount=todayPending().length+1;
+    document.getElementById('cmpPending').textContent=`儲存後，今日尚有 ${pendingCount} 筆待迴向`;
+    go('complete');
+  }
+
+  function saveCurrentRecord(){
+    if(_pending){const arr=loadSessions();arr.push(_pending);saveSessions(arr);_pending=null;}
+    refreshHome();go('home');
+  }
+  function saveCurrentAndGoDedication(){
+    if(_pending){const arr=loadSessions();arr.push(_pending);saveSessions(arr);_pending=null;}
+    enterDedication();go('dedication');
+  }
+
+  // ========= 三段式迴向 =========
+  function enterDedication(){
+    const pending=todayPending();
+    const summary=document.getElementById('dedSummary');
+    const t1=document.getElementById('dedText1');
+    if(pending.length===0){
+      summary.innerHTML='今日尚無待迴向的修持紀錄';
+      t1.textContent='我將今日所持咒的一切功德，回向供養諸佛菩薩。';
+      return;
+    }
+    const minT=Math.min(...pending.map(s=>s.startTime));
+    const maxT=Math.max(...pending.map(s=>s.endTime));
+    const totalCount=pending.reduce((a,b)=>a+b.count,0);
+    const range=fmtTime(minT)+' 至 '+fmtTime(maxT);
+    summary.innerHTML=`本次迴向包含 <span style="color:var(--gold-glow)">${pending.length}</span> 筆 ・ 共 <span style="color:var(--gold-glow)">${totalCount}</span> 遍<br><span style="color:var(--text-dim);font-size:12px">${range}</span>`;
+    t1.innerHTML=`我將今日 ${range} 所持咒的<br>一切功德，回向供養諸佛菩薩。`;
+  }
+  function completeDedication(){
+    const now=Date.now();
+    const arr=loadSessions();
+    arr.forEach(s=>{if(!s.dedicated && s.endTime>=todayStart()){s.dedicated=true;s.dedicatedAt=now;}});
+    saveSessions(arr);refreshHome();go('home');
+  }
+
+  // ========= 首頁 =========
+  function calcStreak(){
+    const days=new Set(loadSessions().map(s=>{const d=new Date(s.endTime);d.setHours(0,0,0,0);return d.getTime()}));
+    let n=0,d=new Date();d.setHours(0,0,0,0);
+    while(days.has(d.getTime())){n++;d.setDate(d.getDate()-1);}
+    return n;
+  }
+  function refreshHome(){
+    const today=todayAll();
+    const week=loadSessions().filter(s=>s.endTime>=weekStart());
+    const todayCount=today.reduce((a,b)=>a+b.count,0);
+    const todayMin=today.reduce((a,b)=>a+b.duration,0);
+    const weekCount=week.reduce((a,b)=>a+b.count,0);
+    document.getElementById('homeToday').textContent=todayCount;
+    document.getElementById('homeMinutes').textContent=todayMin;
+    document.getElementById('homeWeek').textContent=weekCount;
+    document.getElementById('homeStreak').textContent=calcStreak();
+    const ratio=Math.min(1,todayCount/108);
+    document.getElementById('homeArc').setAttribute('stroke-dashoffset',326*(1-ratio));
+    const pending=todayPending();
+    const el=document.getElementById('homePending');
+    el.innerHTML = pending.length
+      ? `<span style="color:#e26a4a">●</span> 今日尚有 ${pending.length} 筆待迴向`
+      : (todayCount?'<span style="color:var(--gold)">●</span> 今日已圓滿迴向':'');
+  }
+
+  // ========= 記錄頁 =========
+  function refreshRecords(){
+    const all=loadSessions().slice().reverse();
+    const wrap=document.getElementById('recordsList');
+    if(all.length===0){
+      wrap.innerHTML='<div class="rec-empty">尚無修持紀錄<br>從首頁開始第一次修持吧</div>';
+      return;
+    }
+    const groups={};
+    all.forEach(s=>{const k=fmtDate(s.endTime);(groups[k]=groups[k]||[]).push(s)});
+    let html='';
+    Object.keys(groups).forEach(date=>{
+      const items=groups[date];
+      const total=items.reduce((a,b)=>a+b.count,0);
+      const pending=items.filter(s=>!s.dedicated).length;
+      html+=`<div class="rec-day"><div class="rec-day-head"><span>${date}</span><span class="meta">${total} 遍 ・ ${pending?pending+' 筆待迴向':'已迴向'}</span></div>`;
+      items.forEach(s=>{
+        html+=`<div class="rec-item">
+          <div class="badge ${s.dedicated?'':'pending'}"></div>
+          <div class="info"><div class="name">${s.mantra}</div>
+            <div class="sub">${fmtTime(s.startTime)} - ${fmtTime(s.endTime)} ・ ${s.duration} 分 ・ ${s.dedicated?'已迴向':'待迴向'}</div>
+          </div>
+          <div class="cnt">${s.count}<span class="u">/${s.target}</span></div>
+        </div>`;
+      });
+      html+='</div>';
+    });
+    wrap.innerHTML=html;
+  }
+
+  // 包裝 go() — 切到對應頁時刷新內容
+  const _go=go;
+  go=function(name){
+    _go(name);
+    if(name==='home')refreshHome();
+    if(name==='records')refreshRecords();
+    if(name==='dedication')enterDedication();
+  };
+
+  refreshHome();
+  let lastTap=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastTap<300)e.preventDefault();lastTap=n;},{passive:false});
+
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+</script>
+</body>
+</html>
