@@ -676,28 +676,29 @@
   const sounds={
     wood(){
       const a=actx(),t=a.currentTime,sr=a.sampleRate;
-      // ── Karplus-Strong 物理建模 ── 撞擊中空木體共鳴
-      const freq=375,N=Math.round(sr/freq),total=Math.ceil(sr*.58),decay=0.9935;
+      // Karplus-Strong 物理建模：寺院木魚 ~252Hz
+      const freq=252,N=Math.round(sr/freq),total=Math.ceil(sr*.48),decay=0.9962;
       const ring=new Float32Array(N);
-      // 初始激勵：帶寬窄化的雜訊（模仿木槌撞擊點）
-      for(let i=0;i<N;i++) ring[i]=(Math.random()*2-1)*Math.exp(-i/N*3.5);
-      const ksBuf=a.createBuffer(1,total,sr);const ksOut=ksBuf.getChannelData(0);
+      for(let i=0;i<N;i++) ring[i]=Math.random()*2-1; // 純白雜訊激勵
+      const ksBuf=a.createBuffer(1,total,sr);
+      const ksOut=ksBuf.getChannelData(0);
       for(let i=0;i<total;i++){
-        const p=i%N,q=(i+1)%N;
+        const p=i%N,q=(p+1)%N;
         ksOut[i]=ring[p];
-        ring[p]=decay*.5*(ring[p]+ring[q]); // 低通 + 衰減
+        ring[p]=decay*.5*(ring[p]+ring[q]);
       }
       const ksSrc=a.createBufferSource();ksSrc.buffer=ksBuf;
-      // 撞擊點擊聲（最初 6ms 的寬頻噪音）
-      const clkBuf=a.createBuffer(1,Math.floor(sr*.006),sr);
-      const clkD=clkBuf.getChannelData(0);
-      for(let i=0;i<clkD.length;i++) clkD[i]=(Math.random()*2-1)*Math.pow(1-i/clkD.length,2);
-      const clkSrc=a.createBufferSource();clkSrc.buffer=clkBuf;
-      const clkF=a.createBiquadFilter();clkF.type='highpass';clkF.frequency.value=800;
-      const clkG=a.createGain();clkG.gain.value=.4;
-      clkSrc.connect(clkF);clkF.connect(clkG);
-      emit(ksSrc,1.15,.25);emit(clkG,.7,.12);
-      ksSrc.start(t);clkSrc.start(t);
+      // 木槌撞擊：4ms 帶通噪音（模擬木頭撞擊質感）
+      const cLen=Math.floor(sr*.004);
+      const cBuf=a.createBuffer(1,cLen,sr);
+      const cD=cBuf.getChannelData(0);
+      for(let i=0;i<cLen;i++) cD[i]=(Math.random()*2-1)*(1-i/cLen)**2;
+      const cSrc=a.createBufferSource();cSrc.buffer=cBuf;
+      const cf=a.createBiquadFilter();cf.type='bandpass';cf.frequency.value=1500;cf.Q.value=1.2;
+      const cg=a.createGain();cg.gain.value=0.5;
+      cSrc.connect(cf);cf.connect(cg);
+      emit(ksSrc,1.1,.18);emit(cg,.9,.06);
+      ksSrc.start(t);cSrc.start(t);
     },
     bell(){
       const a=actx(),t=a.currentTime;
