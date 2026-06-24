@@ -676,24 +676,24 @@
   const sounds={
     wood(){
       const a=actx(),t=a.currentTime;
-      // 中空木體非諧波共振：比例 1:2.11:3.84（非弦樂器）
-      [[400,1.0,.16],[845,.28,.08],[1535,.10,.04]].forEach(([f,amp,dur])=>{
+      // 大型木魚非諧波共振（頻率低 = 體積大 = 渾厚）
+      [[290,1.0,.32],[612,.20,.13],[1114,.06,.05]].forEach(([f,amp,dur])=>{
         const o=a.createOscillator(),g=a.createGain();
         o.type='sine';o.frequency.value=f;
         g.gain.setValueAtTime(amp,t);
         g.gain.exponentialRampToValueAtTime(.001,t+dur);
-        o.connect(g);emit(g,.95,.14);
+        o.connect(g);emit(g,1.05,.22);
         o.start(t);o.stop(t+dur+.02);
       });
-      // 木槌撞擊瞬態（2ms 帶通噪音）
-      const sr=a.sampleRate,n=sr*.002|0;
+      // 木槌撞擊瞬態（3ms 帶通噪音，頻率偏低較厚實）
+      const sr=a.sampleRate,n=sr*.003|0;
       const nb=a.createBuffer(1,n,sr),nd=nb.getChannelData(0);
       for(let i=0;i<n;i++) nd[i]=(Math.random()*2-1)*(1-i/n)**2;
       const ns=a.createBufferSource();ns.buffer=nb;
-      const nf=a.createBiquadFilter();nf.type='bandpass';nf.frequency.value=2200;nf.Q.value=.9;
-      const ng=a.createGain();ng.gain.value=.8;
+      const nf=a.createBiquadFilter();nf.type='bandpass';nf.frequency.value=1600;nf.Q.value=1.0;
+      const ng=a.createGain();ng.gain.value=.7;
       ns.connect(nf);nf.connect(ng);
-      emit(ng,.85,.05);ns.start(t);
+      emit(ng,.8,.07);ns.start(t);
     },
     bell(){
       const a=actx(),t=a.currentTime;
