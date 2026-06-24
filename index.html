@@ -788,6 +788,14 @@
   const fmtDate=t=>{const d=new Date(t);return d.getFullYear()+'/'+pad(d.getMonth()+1)+'/'+pad(d.getDate())};
 
   // ========= 修持狀態 =========
+  const chantTextMap={
+    '觀世音菩薩':'南無觀世音菩薩',
+    '唵嘛呢叭咪吽':'唵 嘛 呢 叭 咪 吽',
+    '南無觀世音菩薩':'南無觀世音菩薩',
+    '般若波羅蜜多心經':'觀自在菩薩，行深般若波羅蜜多時',
+    '準提神咒':'稽首皈依蘇悉帝，頭面頂禮七俱胝',
+  };
+  function getChantText(m){return chantTextMap[m]||m;}
   let currentMantra='南無阿彌陀佛';
   let practiceStart=null;
   let count=0,target=108;
@@ -799,7 +807,7 @@
     count=0;
     practiceStart=Date.now();
     document.getElementById('prTitle').textContent=mantra;
-    document.getElementById('prChant').textContent=mantra;
+    document.getElementById('prChant').textContent=getChantText(mantra);
     updatePr();
     go('practice');
   }
