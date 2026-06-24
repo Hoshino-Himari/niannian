@@ -458,7 +458,7 @@
       </div>
       <div class="switch-cell">
         <div class="label"><svg><use href="#i-person"/></svg>跟念</div>
-        <div class="switch" onclick="this.classList.toggle('on')"></div>
+        <div class="switch" id="chantSwitch" onclick="toggleChant(this)"></div>
       </div>
     </div>
 
@@ -553,12 +553,12 @@
       <div class="chip">迴向文</div>
     </div>
 
-    <div class="lib-card"><div class="ico"><svg><use href="#lotus"/></svg></div><div style="flex:1"><h4>南無阿彌陀佛</h4><p>淨土法門根本佛號，攝受念佛人往生極樂。</p></div><div class="add">+</div></div>
-    <div class="lib-card"><div class="ico"><svg><use href="#i-buddha"/></svg></div><div style="flex:1"><h4>觀世音菩薩聖號</h4><p>大慈大悲，尋聲救苦。</p></div><div class="add">+</div></div>
-    <div class="lib-card"><div class="ico"><svg><use href="#i-wheel"/></svg></div><div style="flex:1"><h4>六字大明咒</h4><p>唵嘛呢叭咪吽 ・ 觀音心咒。</p></div><div class="add">+</div></div>
-    <div class="lib-card"><div class="ico"><svg><use href="#i-doc"/></svg></div><div style="flex:1"><h4>大悲咒</h4><p>觀世音菩薩廣大圓滿無礙大悲心陀羅尼。</p></div><div class="add">+</div></div>
-    <div class="lib-card"><div class="ico"><svg><use href="#i-doc"/></svg></div><div style="flex:1"><h4>般若波羅蜜多心經</h4><p>觀自在菩薩，行深般若波羅蜜多時…</p></div><div class="add">+</div></div>
-    <div class="lib-card"><div class="ico"><svg><use href="#lotus"/></svg></div><div style="flex:1"><h4>準提神咒</h4><p>稽首皈依蘇悉帝，頭面頂禮七俱胝…</p></div><div class="add">+</div></div>
+    <div class="lib-card" onclick="startPractice('南無阿彌陀佛')"><div class="ico"><svg><use href="#lotus"/></svg></div><div style="flex:1"><h4>南無阿彌陀佛</h4><p>淨土法門根本佛號，攝受念佛人往生極樂。</p></div><div class="add">›</div></div>
+    <div class="lib-card" onclick="startPractice('觀世音菩薩')"><div class="ico"><svg><use href="#i-buddha"/></svg></div><div style="flex:1"><h4>觀世音菩薩聖號</h4><p>大慈大悲，尋聲救苦。</p></div><div class="add">›</div></div>
+    <div class="lib-card" onclick="startPractice('唵嘛呢叭咪吽')"><div class="ico"><svg><use href="#i-wheel"/></svg></div><div style="flex:1"><h4>六字大明咒</h4><p>唵嘛呢叭咪吽 ・ 觀音心咒。</p></div><div class="add">›</div></div>
+    <div class="lib-card" onclick="startPractice('南無觀世音菩薩')"><div class="ico"><svg><use href="#i-doc"/></svg></div><div style="flex:1"><h4>大悲咒</h4><p>觀世音菩薩廣大圓滿無礙大悲心陀羅尼。</p></div><div class="add">›</div></div>
+    <div class="lib-card" onclick="startPractice('般若波羅蜜多心經')"><div class="ico"><svg><use href="#i-doc"/></svg></div><div style="flex:1"><h4>般若波羅蜜多心經</h4><p>觀自在菩薩，行深般若波羅蜜多時…</p></div><div class="add">›</div></div>
+    <div class="lib-card" onclick="startPractice('準提神咒')"><div class="ico"><svg><use href="#lotus"/></svg></div><div style="flex:1"><h4>準提神咒</h4><p>稽首皈依蘇悉帝，頭面頂禮七俱胝…</p></div><div class="add">›</div></div>
   </div>
 
   <!-- ============= 記錄 ============= -->
@@ -650,26 +650,79 @@
   }
   function haptic(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
 
-  let ac;
-  function audio(){ if(!ac) ac = new (window.AudioContext||window.webkitAudioContext)(); return ac; }
-  const sounds = {
-    wood(){const a=audio(),t=a.currentTime;const o=a.createOscillator(),g=a.createGain(),f=a.createBiquadFilter();
-      o.type='triangle';o.frequency.setValueAtTime(380,t);o.frequency.exponentialRampToValueAtTime(140,t+.08);
-      f.type='lowpass';f.frequency.value=1800;
-      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.7,t+.005);g.gain.exponentialRampToValueAtTime(.001,t+.18);
-      o.connect(f);f.connect(g);g.connect(a.destination);o.start(t);o.stop(t+.2);},
-    bell(){const a=audio(),t=a.currentTime;[1,2.7,5.4].forEach((m,i)=>{const o=a.createOscillator(),g=a.createGain();
-      o.type='sine';o.frequency.value=240*m;
-      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.25/(i+1),t+.01);g.gain.exponentialRampToValueAtTime(.001,t+2.5);
-      o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+2.6);});},
-    qing(){const a=audio(),t=a.currentTime;const o=a.createOscillator(),g=a.createGain();
-      o.type='sine';o.frequency.value=1760;
-      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.35,t+.005);g.gain.exponentialRampToValueAtTime(.001,t+1.2);
-      o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+1.3);},
-    bowl(){const a=audio(),t=a.currentTime;[196,294].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();
-      o.type='sine';o.frequency.value=f;
-      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.2,t+.1);g.gain.exponentialRampToValueAtTime(.001,t+3);
-      o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+3.1);});},
+  // ========= 殿堂音效系統 =========
+  let _ac,_rev;
+  function actx(){
+    if(!_ac){
+      _ac=new(window.AudioContext||window.webkitAudioContext)();
+      // 寺院殘響脈衝（4 秒指數衰減）
+      const sr=_ac.sampleRate,len=sr*4;
+      const buf=_ac.createBuffer(2,len,sr);
+      for(let c=0;c<2;c++){const d=buf.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.2);}
+      _rev=_ac.createConvolver();_rev.buffer=buf;
+      const rg=_ac.createGain();rg.gain.value=0.52;_rev.connect(rg);rg.connect(_ac.destination);
+    }
+    if(_ac.state==='suspended')_ac.resume();
+    return _ac;
+  }
+  // 送出：直達 + 殘響混合
+  function emit(src,gain,wet=0.4){
+    const a=actx(),g=a.createGain();g.gain.value=gain;src.connect(g);
+    const d=a.createGain();d.gain.value=1-wet;g.connect(d);d.connect(a.destination);
+    const w=a.createGain();w.gain.value=wet;g.connect(w);w.connect(_rev);
+  }
+  const sounds={
+    wood(){
+      const a=actx(),t=a.currentTime;
+      // 撞擊噪音瞬態（木質衝擊感）
+      const nb=a.createBuffer(1,Math.floor(a.sampleRate*.022),a.sampleRate);
+      const nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
+      const ns=a.createBufferSource();ns.buffer=nb;
+      const nf=a.createBiquadFilter();nf.type='bandpass';nf.frequency.value=850;nf.Q.value=3.5;
+      const ng=a.createGain();ng.gain.setValueAtTime(.75,t);ng.gain.exponentialRampToValueAtTime(.001,t+.022);
+      ns.connect(nf);nf.connect(ng);emit(ng,.95,.18);ns.start(t);
+      // 木質共鳴主音（pitch 下滑）
+      const o1=a.createOscillator(),g1=a.createGain();
+      o1.type='sine';o1.frequency.setValueAtTime(330,t);o1.frequency.exponentialRampToValueAtTime(185,t+.11);
+      g1.gain.setValueAtTime(.9,t);g1.gain.exponentialRampToValueAtTime(.001,t+.34);
+      o1.connect(g1);emit(g1,1,.32);o1.start(t);o1.stop(t+.36);
+      // 二次諧波（質感）
+      const o2=a.createOscillator(),g2=a.createGain();
+      o2.type='triangle';o2.frequency.setValueAtTime(660,t);o2.frequency.exponentialRampToValueAtTime(370,t+.07);
+      g2.gain.setValueAtTime(.28,t);g2.gain.exponentialRampToValueAtTime(.001,t+.13);
+      o2.connect(g2);emit(g2,.8,.22);o2.start(t);o2.stop(t+.15);
+    },
+    bell(){
+      const a=actx(),t=a.currentTime;
+      // 真實銅鐘頻率比例 + 低八度增強震撼感
+      [[.5,.28,9],[1,.95,8],[2.756,.52,5],[5.404,.24,3],[8.733,.11,2],[11.4,.06,1.4]].forEach(([r,amp,dur])=>{
+        const o=a.createOscillator(),g=a.createGain();
+        o.type='sine';o.frequency.value=82*r;
+        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(amp,t+.015);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+        o.connect(g);emit(g,1,.58);o.start(t);o.stop(t+dur+.1);
+      });
+    },
+    qing(){
+      const a=actx(),t=a.currentTime;
+      [[2637,1,2.4],[5274,.3,1.3],[7911,.1,.85]].forEach(([f,amp,dur])=>{
+        const o=a.createOscillator(),g=a.createGain();
+        o.type='sine';o.frequency.value=f;
+        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(amp*.55,t+.007);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+        o.connect(g);emit(g,.85,.45);o.start(t);o.stop(t+dur+.1);
+      });
+    },
+    bowl(){
+      const a=actx(),t=a.currentTime;
+      // 拍音組（微失諧製造呼吸感）+ 超長衰減
+      [[196,197.3,.55,7],[392,393.7,.3,5],[588,589.9,.16,3.2]].forEach(([f1,f2,amp,dur])=>{
+        [f1,f2].forEach(f=>{
+          const o=a.createOscillator(),g=a.createGain();
+          o.type='sine';o.frequency.value=f;
+          g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(amp,t+.22);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+          o.connect(g);emit(g,1,.62);o.start(t);o.stop(t+dur+.1);
+        });
+      });
+    },
     silent(){}
   };
   let currentSound='wood';
@@ -684,6 +737,43 @@
       setTimeout(()=>document.getElementById('soundModal').classList.remove('show'),400);
     };
   });
+
+  // ========= 跟念語音系統 =========
+  let _voices=[],_chantActive=false,_chantTimer=null;
+  function _loadV(){_voices=speechSynthesis.getVoices();}
+  _loadV();if(speechSynthesis.onvoiceschanged!==undefined)speechSynthesis.onvoiceschanged=_loadV;
+  function _bestVoice(){
+    return _voices.find(v=>v.lang==='zh-TW')
+      ||_voices.find(v=>v.lang==='zh-CN')
+      ||_voices.find(v=>v.lang.startsWith('zh'))
+      ||null;
+  }
+  function _doChant(text){
+    if(!_chantActive)return;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='zh-TW';u.rate=0.34;u.pitch=0.58;u.volume=1;
+    const v=_bestVoice();if(v)u.voice=v;
+    u.onend=()=>{if(_chantActive)_chantTimer=setTimeout(()=>_doChant(text),1600);};
+    u.onerror=()=>{};
+    speechSynthesis.speak(u);
+  }
+  function stopChant(){
+    _chantActive=false;clearTimeout(_chantTimer);
+    try{speechSynthesis.cancel();}catch(e){}
+    const sw=document.getElementById('chantSwitch');
+    if(sw)sw.classList.remove('on');
+  }
+  function toggleChant(el){
+    el.classList.toggle('on');
+    if(el.classList.contains('on')){
+      _chantActive=true;
+      if(_voices.length===0){setTimeout(_loadV,300);}
+      _doChant(currentMantra);
+    } else {
+      stopChant();el.classList.add('on');el.classList.remove('on');
+    }
+  }
 
   // ========= 資料層 =========
   const STORE='nn.sessions';
@@ -704,6 +794,7 @@
   const arcLen=578,R=92,CX=100,CY=100;
 
   function startPractice(mantra){
+    stopChant();
     currentMantra=mantra;
     count=0;
     practiceStart=Date.now();
@@ -847,6 +938,7 @@
   const _go=go;
   go=function(name){
     _go(name);
+    if(name!=='practice')stopChant();
     if(name==='home')refreshHome();
     if(name==='records')refreshRecords();
     if(name==='dedication')enterDedication();
