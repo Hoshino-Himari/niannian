@@ -675,30 +675,25 @@
   }
   const sounds={
     wood(){
-      const a=actx(),t=a.currentTime,sr=a.sampleRate;
-      // Karplus-Strong 物理建模：寺院木魚 ~252Hz
-      const freq=252,N=Math.round(sr/freq),total=Math.ceil(sr*.48),decay=0.9962;
-      const ring=new Float32Array(N);
-      for(let i=0;i<N;i++) ring[i]=Math.random()*2-1; // 純白雜訊激勵
-      const ksBuf=a.createBuffer(1,total,sr);
-      const ksOut=ksBuf.getChannelData(0);
-      for(let i=0;i<total;i++){
-        const p=i%N,q=(p+1)%N;
-        ksOut[i]=ring[p];
-        ring[p]=decay*.5*(ring[p]+ring[q]);
-      }
-      const ksSrc=a.createBufferSource();ksSrc.buffer=ksBuf;
-      // 木槌撞擊：4ms 帶通噪音（模擬木頭撞擊質感）
-      const cLen=Math.floor(sr*.004);
-      const cBuf=a.createBuffer(1,cLen,sr);
-      const cD=cBuf.getChannelData(0);
-      for(let i=0;i<cLen;i++) cD[i]=(Math.random()*2-1)*(1-i/cLen)**2;
-      const cSrc=a.createBufferSource();cSrc.buffer=cBuf;
-      const cf=a.createBiquadFilter();cf.type='bandpass';cf.frequency.value=1500;cf.Q.value=1.2;
-      const cg=a.createGain();cg.gain.value=0.5;
-      cSrc.connect(cf);cf.connect(cg);
-      emit(ksSrc,1.1,.18);emit(cg,.9,.06);
-      ksSrc.start(t);cSrc.start(t);
+      const a=actx(),t=a.currentTime;
+      // 中空木體非諧波共振：比例 1:2.11:3.84（非弦樂器）
+      [[400,1.0,.16],[845,.28,.08],[1535,.10,.04]].forEach(([f,amp,dur])=>{
+        const o=a.createOscillator(),g=a.createGain();
+        o.type='sine';o.frequency.value=f;
+        g.gain.setValueAtTime(amp,t);
+        g.gain.exponentialRampToValueAtTime(.001,t+dur);
+        o.connect(g);emit(g,.95,.14);
+        o.start(t);o.stop(t+dur+.02);
+      });
+      // 木槌撞擊瞬態（2ms 帶通噪音）
+      const sr=a.sampleRate,n=sr*.002|0;
+      const nb=a.createBuffer(1,n,sr),nd=nb.getChannelData(0);
+      for(let i=0;i<n;i++) nd[i]=(Math.random()*2-1)*(1-i/n)**2;
+      const ns=a.createBufferSource();ns.buffer=nb;
+      const nf=a.createBiquadFilter();nf.type='bandpass';nf.frequency.value=2200;nf.Q.value=.9;
+      const ng=a.createGain();ng.gain.value=.8;
+      ns.connect(nf);nf.connect(ng);
+      emit(ng,.85,.05);ns.start(t);
     },
     bell(){
       const a=actx(),t=a.currentTime;
