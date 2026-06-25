@@ -676,24 +676,25 @@
   const sounds={
     wood(){
       const a=actx(),t=a.currentTime;
-      // 大型木魚非諧波共振（頻率低 = 體積大 = 渾厚）
-      [[290,1.0,.32],[612,.20,.13],[1114,.06,.05]].forEach(([f,amp,dur])=>{
-        const o=a.createOscillator(),g=a.createGain();
-        o.type='sine';o.frequency.value=f;
-        g.gain.setValueAtTime(amp,t);
-        g.gain.exponentialRampToValueAtTime(.001,t+dur);
-        o.connect(g);emit(g,1.05,.22);
-        o.start(t);o.stop(t+dur+.02);
-      });
-      // 木槌撞擊瞬態（3ms 帶通噪音，頻率偏低較厚實）
-      const sr=a.sampleRate,n=sr*.003|0;
-      const nb=a.createBuffer(1,n,sr),nd=nb.getChannelData(0);
-      for(let i=0;i<n;i++) nd[i]=(Math.random()*2-1)*(1-i/n)**2;
-      const ns=a.createBufferSource();ns.buffer=nb;
-      const nf=a.createBiquadFilter();nf.type='bandpass';nf.frequency.value=1600;nf.Q.value=1.0;
-      const ng=a.createGain();ng.gain.value=.7;
-      ns.connect(nf);nf.connect(ng);
-      emit(ng,.8,.07);ns.start(t);
+      // 木頭共鳴：低Q帶通噪音（木頭是阻尼共鳴，不是純音）
+      const sr=a.sampleRate;
+      const bodyLen=sr*.22|0;
+      const bBuf=a.createBuffer(1,bodyLen,sr),bD=bBuf.getChannelData(0);
+      for(let i=0;i<bodyLen;i++) bD[i]=(Math.random()*2-1)*Math.exp(-i/(sr*.06));
+      const bSrc=a.createBufferSource();bSrc.buffer=bBuf;
+      // 低Q帶通 = 寬頻共鳴（木頭） 高Q = 窄峰（金屬管）
+      const bf1=a.createBiquadFilter();bf1.type='bandpass';bf1.frequency.value=320;bf1.Q.value=4;
+      const bf2=a.createBiquadFilter();bf2.type='bandpass';bf2.frequency.value=680;bf2.Q.value=3;
+      const bg=a.createGain();bg.gain.value=4;
+      bSrc.connect(bf1);bSrc.connect(bf2);bf1.connect(bg);bf2.connect(bg);
+      emit(bg,1.0,.20);bSrc.start(t);
+      // 撞擊點擊（3ms）
+      const cLen=sr*.003|0,cBuf=a.createBuffer(1,cLen,sr),cD=cBuf.getChannelData(0);
+      for(let i=0;i<cLen;i++) cD[i]=(Math.random()*2-1)*(1-i/cLen)**2;
+      const cSrc=a.createBufferSource();cSrc.buffer=cBuf;
+      const cf=a.createBiquadFilter();cf.type='highpass';cf.frequency.value=1200;
+      const cg=a.createGain();cg.gain.value=.6;
+      cSrc.connect(cf);cf.connect(cg);emit(cg,.7,.05);cSrc.start(t);
     },
     bell(){
       const a=actx(),t=a.currentTime;
