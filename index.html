@@ -676,25 +676,33 @@
   const sounds={
     wood(){
       const a=actx(),t=a.currentTime;
-      // 木頭共鳴：低Q帶通噪音（木頭是阻尼共鳴，不是純音）
-      const sr=a.sampleRate;
-      const bodyLen=sr*.22|0;
-      const bBuf=a.createBuffer(1,bodyLen,sr),bD=bBuf.getChannelData(0);
-      for(let i=0;i<bodyLen;i++) bD[i]=(Math.random()*2-1)*Math.exp(-i/(sr*.06));
-      const bSrc=a.createBufferSource();bSrc.buffer=bBuf;
-      // 低Q帶通 = 寬頻共鳴（木頭） 高Q = 窄峰（金屬管）
-      const bf1=a.createBiquadFilter();bf1.type='bandpass';bf1.frequency.value=320;bf1.Q.value=4;
-      const bf2=a.createBiquadFilter();bf2.type='bandpass';bf2.frequency.value=680;bf2.Q.value=3;
-      const bg=a.createGain();bg.gain.value=4;
-      bSrc.connect(bf1);bSrc.connect(bf2);bf1.connect(bg);bf2.connect(bg);
-      emit(bg,1.0,.20);bSrc.start(t);
-      // 撞擊點擊（3ms）
-      const cLen=sr*.003|0,cBuf=a.createBuffer(1,cLen,sr),cD=cBuf.getChannelData(0);
-      for(let i=0;i<cLen;i++) cD[i]=(Math.random()*2-1)*(1-i/cLen)**2;
+      // 雙指數衰減模態合成：木頭敲擊物理模型
+      // 木頭特性：極快的初始衰減(4ms) + 慢速體鳴(150ms)
+      // 金屬/管：初始衰減慢，聽起來就像水管
+      const sr=a.sampleRate,dur=.38,n=dur*sr|0;
+      const buf=a.createBuffer(1,n,sr),d=buf.getChannelData(0);
+      // [頻率Hz, 快速振幅, 快速衰減s, 慢速振幅, 慢速衰減s]
+      const modes=[[310,.80,.004,.18,.15],[640,.15,.003,.06,.06],[1180,.04,.002,.015,.025]];
+      const ph=modes.map(()=>0);
+      for(let i=0;i<n;i++){
+        const ti=i/sr;let s=0;
+        for(let m=0;m<modes.length;m++){
+          const[f,a1,t1,a2,t2]=modes[m];
+          s+=(a1*Math.exp(-ti/t1)+a2*Math.exp(-ti/t2))*Math.sin(ph[m]);
+          ph[m]+=2*Math.PI*f/sr;
+        }
+        d[i]=s;
+      }
+      const src=a.createBufferSource();src.buffer=buf;
+      // 2ms 撞擊噪音
+      const cLen=sr*.002|0,cBuf=a.createBuffer(1,cLen,sr),cD=cBuf.getChannelData(0);
+      for(let i=0;i<cLen;i++) cD[i]=(Math.random()*2-1)*(1-i/cLen);
       const cSrc=a.createBufferSource();cSrc.buffer=cBuf;
-      const cf=a.createBiquadFilter();cf.type='highpass';cf.frequency.value=1200;
-      const cg=a.createGain();cg.gain.value=.6;
-      cSrc.connect(cf);cf.connect(cg);emit(cg,.7,.05);cSrc.start(t);
+      const cf=a.createBiquadFilter();cf.type='bandpass';cf.frequency.value=3000;cf.Q.value=.6;
+      const cg=a.createGain();cg.gain.value=.4;
+      cSrc.connect(cf);cf.connect(cg);
+      emit(src,.78,.14);emit(cg,.55,.04);
+      src.start(t);cSrc.start(t);
     },
     bell(){
       const a=actx(),t=a.currentTime;
