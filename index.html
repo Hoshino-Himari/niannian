@@ -456,10 +456,6 @@
         <div class="label"><svg><use href="#i-bell-2"/></svg>引磬</div>
         <div class="switch on" onclick="this.classList.toggle('on')"></div>
       </div>
-      <div class="switch-cell">
-        <div class="label"><svg><use href="#i-person"/></svg>跟念</div>
-        <div class="switch" id="chantSwitch" onclick="toggleChant(this)"></div>
-      </div>
     </div>
 
     <button class="btn btn-primary" id="tapBtn"><svg><use href="#lotus"/></svg>輕觸 +1</button>
@@ -750,114 +746,7 @@
     };
   });
 
-  // ========= 梵音共振峰合成誦念（Formant Synthesis）=========
-  // 音節格式: [基頻Hz, F1共振峰kHz, F2共振峰kHz, F3共振峰kHz, 時長s]
-  // 共振峰頻率對應梵漢語元音音色
-  const _SYLLS={
-    '南無阿彌陀佛': [[147,.70,1.22,2.85,.92],[131,.50,.90,2.70,.82],[147,.80,1.20,2.80,.92],[165,.28,2.25,3.10,.88],[131,.58,.95,2.75,.88],[110,.43,.82,2.65,1.65]],
-    '觀世音菩薩':   [[147,.46,.75,2.60,.92],[165,.31,2.20,3.00,.78],[165,.60,.88,2.70,.78],[147,.52,.76,2.60,.82],[131,.64,1.00,2.70,1.45]],
-    '南無觀世音菩薩':[[147,.70,1.22,2.85,.80],[131,.50,.90,2.70,.72],[147,.46,.75,2.60,.85],[165,.31,2.20,3.00,.75],[165,.60,.88,2.70,.75],[147,.52,.76,2.60,.80],[131,.64,1.00,2.70,1.45]],
-    '唵嘛呢叭咪吽': [[165,.52,.76,2.50,1.25],[147,.72,1.18,2.80,.92],[147,.31,2.20,3.00,.88],[131,.72,1.20,2.80,.88],[123,.33,2.10,3.00,.88],[98,.46,.72,2.55,1.85]],
-    '般若波羅蜜多心經':[[147,.70,1.22,2.85,.78],[147,.31,2.20,3.00,.75],[165,.52,.76,2.60,.75],[131,.72,1.20,2.80,.78],[131,.28,2.25,3.10,.78],[147,.70,1.22,2.85,.78],[147,.52,.76,2.60,.78],[123,.31,2.20,3.00,.75],[131,.43,.82,2.65,1.45]],
-    '準提神咒':     [[147,.52,.76,2.60,.85],[131,.31,2.20,3.00,.80],[131,.38,2.00,2.90,.80],[131,.52,.76,2.60,.80],[131,.72,1.20,2.80,1.45]],
-    // 大吉祥天女十二名號：吉慶 吉祥 蓮華 嚴飾 具財 白色 大名稱 蓮華眼 大光曜 施食者 施飲者 寶光
-    '大吉祥天女': [
-      [165,.28,2.20,3.00,.75],[147,.30,2.10,2.90,.85], // 吉慶
-      [165,.28,2.20,3.00,.75],[147,.55,1.10,2.80,.85], // 吉祥
-      [147,.50,1.80,2.90,.75],[131,.70,1.00,2.70,.85], // 蓮華
-      [147,.60,1.70,2.85,.75],[131,.30,2.20,3.00,.85], // 嚴飾
-      [147,.50,.90,2.70,.75], [131,.68,2.10,2.85,.85], // 具財
-      [147,.68,2.10,2.85,.75],[131,.45,1.70,2.70,.85], // 白色
-      [131,.72,1.20,2.80,.70],[131,.28,2.20,3.00,.70],[131,.40,1.90,2.85,.85], // 大名稱
-      [131,.50,1.80,2.90,.70],[123,.70,1.00,2.70,.70],[123,.65,1.20,2.80,.85], // 蓮華眼
-      [123,.72,1.20,2.80,.70],[123,.60,1.00,2.70,.70],[123,.55,2.00,2.90,.85], // 大光曜
-      [123,.40,1.70,2.80,.70],[123,.30,2.10,2.90,.70],[110,.50,1.50,2.80,.85], // 施食者
-      [110,.40,1.70,2.80,.70],[110,.28,2.20,3.00,.70],[110,.50,1.50,2.80,.85], // 施飲者
-      [110,.60,.90,2.65,.90],[110,.60,1.00,2.70,1.55], // 寶光（尾音延長）
-    ],
-    // 楞嚴咒心：oṃ anale viśade vīra vajra dhare bandha bandhani vajra-pāṇi phaṭ hūṃ trūṃ phaṭ svāhā
-    '楞嚴咒心':    [
-      [131,.50,.75,2.50,1.30], // 嗡  oṃ
-      [131,.80,1.20,2.80,.78], // 阿  a
-      [131,.70,1.10,2.75,.72], // 那  na
-      [131,.35,2.10,3.00,.72], // 隸  le
-      [131,.30,2.20,3.00,.72], // 毗  vi
-      [131,.70,1.10,2.75,.68], // 舍  śa
-      [131,.35,2.10,3.00,.68], // 提  de
-      [131,.30,2.20,3.00,.68], // 鞞  vī
-      [131,.72,1.00,2.70,.68], // 罹  ra
-      [131,.72,1.10,2.75,.68], // 跋闍 vajra
-      [131,.70,1.00,2.70,.68], // 陀隸 dhare
-      [123,.72,1.00,2.70,.72], // 槃陀 bandha
-      [123,.72,1.00,2.70,.68], // 槃陀 bandha
-      [123,.30,2.20,3.00,.68], // 你  ni
-      [123,.72,1.10,2.75,.65], // 跋闍 vajra
-      [123,.80,1.20,2.80,.65], // 謗  pā
-      [123,.30,2.20,3.00,.65], // 尼  ṇi
-      [123,.72,1.00,2.70,.62], // 泮  phaṭ
-      [110,.46,.72,2.55,1.15], // 吽  hūṃ
-      [110,.50,.76,2.60,.78],  // 都嚕甕 trūṃ
-      [110,.72,1.00,2.70,.62], // 泮  phaṭ
-      [123,.72,1.10,2.75,.88], // 娑婆 svā
-      [123,.80,1.20,2.80,1.25],// 訶  hā
-    ],
-  };
-  const _ALIAS={'六字大明咒':'唵嘛呢叭咪吽','大悲咒':'南無觀世音菩薩','觀世音菩薩聖號':'觀世音菩薩'};
-  function _getSylls(m){return _SYLLS[_ALIAS[m]||m]||null;}
 
-  let _chantActive=false,_chantTimer=null,_chantOscs=[];
-  function stopChant(){
-    _chantActive=false;clearTimeout(_chantTimer);
-    _chantOscs.forEach(o=>{try{o.stop(0);}catch(e){}});_chantOscs=[];
-    const sw=document.getElementById('chantSwitch');if(sw)sw.classList.remove('on');
-  }
-  function _playChant(mantra){
-    if(!_chantActive)return;
-    const sylls=_getSylls(mantra);
-    if(!sylls){_chantTimer=setTimeout(()=>_playChant(mantra),3000);return;}
-    const a=actx();let t=a.currentTime+0.25,totalDur=0;const oscs=[];
-    sylls.forEach(([f0,f1k,f2k,f3k,len])=>{
-      // ── 濁音源：鋸齒波（人聲聲帶振動的近似）──
-      const src=a.createOscillator();src.type='sawtooth';src.frequency.value=f0;
-      // 顫音 LFO（5.3Hz，模仿男聲吟誦抖音）
-      const lfo=a.createOscillator();lfo.frequency.value=5.3;
-      const lg=a.createGain();lg.gain.value=f0*.014;lfo.connect(lg);lg.connect(src.frequency);
-      // ── 三個共振峰濾波器（模仿聲道形狀）──
-      const mkBP=(fkHz,Q)=>{const f=a.createBiquadFilter();f.type='bandpass';f.frequency.value=fkHz*1000;f.Q.value=Q;return f;};
-      const b1=mkBP(f1k,7),b2=mkBP(f2k,9),b3=mkBP(f3k,11);
-      // 氣息雜訊（增加人聲質感）
-      const nBuf=a.createBuffer(1,Math.ceil(a.sampleRate*len),a.sampleRate);
-      const nD=nBuf.getChannelData(0);for(let i=0;i<nD.length;i++)nD[i]=Math.random()*2-1;
-      const nSrc=a.createBufferSource();nSrc.buffer=nBuf;
-      const nF=mkBP(f2k*.8,3);const nG=a.createGain();nG.gain.value=.045;
-      nSrc.connect(nF);nF.connect(nG);
-      // 混合三個共振峰 + 氣息
-      const mx=a.createGain();mx.gain.value=.48;
-      src.connect(b1);b1.connect(mx);
-      src.connect(b2);b2.connect(mx);
-      src.connect(b3);b3.connect(mx);
-      // 音節包絡（緩入緩出）
-      const env=a.createGain();
-      const att=Math.min(.15,len*.18);
-      env.gain.setValueAtTime(0,t);
-      env.gain.linearRampToValueAtTime(.78,t+att);
-      env.gain.setValueAtTime(.78,t+len-att);
-      env.gain.linearRampToValueAtTime(0,t+len);
-      mx.connect(env);nG.connect(env);
-      emit(env,.92,.62);
-      src.start(t);lfo.start(t);nSrc.start(t);
-      src.stop(t+len+.1);lfo.stop(t+len+.1);nSrc.stop(t+len+.1);
-      oscs.push(src,lfo,nSrc);
-      t+=len+.12;totalDur+=len+.12;
-    });
-    _chantOscs=oscs;
-    _chantTimer=setTimeout(()=>_playChant(mantra),(totalDur+2.4)*1000);
-  }
-  function toggleChant(el){
-    el.classList.toggle('on');
-    if(el.classList.contains('on')){_chantActive=true;_playChant(currentMantra);}
-    else{stopChant();el.classList.add('on');el.classList.remove('on');}
-  }
 
   // ========= 資料層 =========
   const STORE='nn.sessions';
@@ -889,7 +778,6 @@
   const arcLen=578,R=92,CX=100,CY=100;
 
   function startPractice(mantra){
-    stopChant();
     currentMantra=mantra;
     count=0;
     practiceStart=Date.now();
@@ -1033,7 +921,6 @@
   const _go=go;
   go=function(name){
     _go(name);
-    if(name!=='practice')stopChant();
     if(name==='home')refreshHome();
     if(name==='records')refreshRecords();
     if(name==='dedication')enterDedication();
