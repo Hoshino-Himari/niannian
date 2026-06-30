@@ -7,7 +7,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="念念">
+<meta name="description" content="念念修持・念佛計數・三段式迴向">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <title>念念</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,6 +33,13 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;background:#000;color:var(--text);font-family:"Noto Sans TC",sans-serif;font-weight:300;overscroll-behavior:none;letter-spacing:.02em}
+  /* 避免雙擊放大、又不影響快速連點 */
+  .btn,.tab,.list-item,.icon-btn,.switch,.switch-cell,.chip,.lib-card,.donate,.opt,.pr-ring,.modal-mask{touch-action:manipulation}
+  /* 尊重使用者「減少動態效果」偏好 */
+  @media (prefers-reduced-motion: reduce){
+    .pr-ring svg.mandala{animation:none}
+    #prArc,#prTip,.num,.num.flash,#prBurst.go{animation:none}
+  }
   body{display:flex;justify-content:center;min-height:100vh}
   #app{
     width:100%;max-width:430px;min-height:100vh;background:var(--bg);
@@ -365,7 +376,7 @@
 
   <!-- ============= 首頁 ============= -->
   <div class="screen active" data-screen="home">
-    <div class="top"><div class="icon-btn"></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="top"><div class="icon-btn"></div><div class="icon-btn" role="button" aria-label="通知" tabindex="0"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
     <div class="logo-wrap">
       <div class="logo"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
       <div class="subtitle">每日修持</div>
@@ -418,7 +429,7 @@
 
   <!-- ============= 修持中 ============= -->
   <div class="screen" data-screen="practice">
-    <div class="top"><div class="icon-btn" onclick="go('home')"><svg><use href="#i-back"/></svg></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="top"><div class="icon-btn" onclick="go('home')"><svg><use href="#i-back"/></svg></div><div class="icon-btn" role="button" aria-label="通知" tabindex="0"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
     <div class="logo-wrap">
       <div class="logo sm"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
       <div class="lotus-sep" style="margin-top:8px"><svg><use href="#lotus"/></svg></div>
@@ -450,21 +461,24 @@
     <div class="switch-row">
       <div class="switch-cell pickable">
         <div class="label" id="soundLabel" onclick="openSoundPicker()"><svg><use href="#i-wood"/></svg>木魚 ▾</div>
-        <div class="switch on" onclick="this.classList.toggle('on')"></div>
+        <div class="switch on" id="swWood" role="switch" aria-checked="true" aria-label="敲擊聲開關" onclick="toggleSwitch(this,'wood')"></div>
       </div>
       <div class="switch-cell">
         <div class="label"><svg><use href="#i-bell-2"/></svg>引磬</div>
-        <div class="switch on" onclick="this.classList.toggle('on')"></div>
+        <div class="switch on" id="swQing" role="switch" aria-checked="true" aria-label="引磬節拍開關" onclick="toggleSwitch(this,'qing')"></div>
       </div>
     </div>
 
-    <button class="btn btn-primary" id="tapBtn"><svg><use href="#lotus"/></svg>輕觸 +1</button>
-    <button class="btn btn-secondary" onclick="finishPractice()">完成此次修持</button>
+    <button class="btn btn-primary" id="tapBtn" aria-label="輕觸計數 +1"><svg><use href="#lotus"/></svg>輕觸 +1</button>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="btn btn-secondary" style="margin-top:0;flex:1;letter-spacing:3px;font-size:14px" id="undoBtn" aria-label="回退一遍">回退一遍</button>
+      <button class="btn btn-secondary" style="margin-top:0;flex:1;letter-spacing:3px;font-size:14px" onclick="finishPractice()">完成此次修持</button>
+    </div>
   </div>
 
   <!-- ============= 修持完成 ============= -->
   <div class="screen" data-screen="complete">
-    <div class="top"><div class="icon-btn" onclick="go('practice')"><svg><use href="#i-back"/></svg></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="top"><div class="icon-btn" onclick="go('practice')"><svg><use href="#i-back"/></svg></div><div class="icon-btn" role="button" aria-label="通知" tabindex="0"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
     <div class="logo-wrap">
       <div class="logo"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
       <div class="subtitle">修持完成</div>
@@ -489,7 +503,7 @@
 
   <!-- ============= 三段式迴向 ============= -->
   <div class="screen" data-screen="dedication">
-    <div class="top"><div class="icon-btn" onclick="go('complete')"><svg><use href="#i-back"/></svg></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="top"><div class="icon-btn" onclick="go('complete')"><svg><use href="#i-back"/></svg></div><div class="icon-btn" role="button" aria-label="通知" tabindex="0"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
     <div class="logo-wrap">
       <div class="logo sm"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
       <div class="subtitle" style="font-size:24px;letter-spacing:14px">三段式迴向</div>
@@ -533,7 +547,7 @@
 
   <!-- ============= 法藏 ============= -->
   <div class="screen" data-screen="library">
-    <div class="top"><div class="icon-btn"></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="top"><div class="icon-btn"></div><div class="icon-btn" role="button" aria-label="通知" tabindex="0"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
     <div class="logo-wrap">
       <div class="logo"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
       <div class="subtitle">法 藏</div>
@@ -542,26 +556,28 @@
     </div>
 
     <div class="lib-tab">
-      <div class="chip active">全部</div>
-      <div class="chip">佛號</div>
-      <div class="chip">咒語</div>
-      <div class="chip">經文</div>
-      <div class="chip">迴向文</div>
+      <div class="chip active" data-cat="all">全部</div>
+      <div class="chip" data-cat="佛號">佛號</div>
+      <div class="chip" data-cat="咒語">咒語</div>
+      <div class="chip" data-cat="經文">經文</div>
+      <div class="chip" data-cat="迴向文">迴向文</div>
     </div>
 
-    <div class="lib-card" onclick="startPractice('南無阿彌陀佛')"><div class="ico"><svg><use href="#lotus"/></svg></div><div style="flex:1"><h4>南無阿彌陀佛</h4><p>淨土法門根本佛號，攝受念佛人往生極樂。</p></div><div class="add">›</div></div>
-    <div class="lib-card" onclick="startPractice('觀世音菩薩')"><div class="ico"><svg><use href="#i-buddha"/></svg></div><div style="flex:1"><h4>觀世音菩薩聖號</h4><p>大慈大悲，尋聲救苦。</p></div><div class="add">›</div></div>
-    <div class="lib-card" onclick="startPractice('唵嘛呢叭咪吽')"><div class="ico"><svg><use href="#i-wheel"/></svg></div><div style="flex:1"><h4>六字大明咒</h4><p>唵嘛呢叭咪吽 ・ 觀音心咒。</p></div><div class="add">›</div></div>
-    <div class="lib-card" onclick="startPractice('南無觀世音菩薩')"><div class="ico"><svg><use href="#i-doc"/></svg></div><div style="flex:1"><h4>大悲咒</h4><p>觀世音菩薩廣大圓滿無礙大悲心陀羅尼。</p></div><div class="add">›</div></div>
-    <div class="lib-card" onclick="startPractice('般若波羅蜜多心經')"><div class="ico"><svg><use href="#i-doc"/></svg></div><div style="flex:1"><h4>般若波羅蜜多心經</h4><p>觀自在菩薩，行深般若波羅蜜多時…</p></div><div class="add">›</div></div>
-    <div class="lib-card" onclick="startPractice('準提神咒')"><div class="ico"><svg><use href="#lotus"/></svg></div><div style="flex:1"><h4>準提神咒</h4><p>稽首皈依蘇悉帝，頭面頂禮七俱胝…</p></div><div class="add">›</div></div>
-    <div class="lib-card" onclick="startPractice('楞嚴咒心')"><div class="ico"><svg><use href="#i-wheel"/></svg></div><div style="flex:1"><h4>楞嚴咒心</h4><p>oṃ anale viśade vīra vajra dhare・心中持咒 光明護念</p></div><div class="add">›</div></div>
-    <div class="lib-card" onclick="startPractice('大吉祥天女')"><div class="ico"><svg><use href="#lotus"/></svg></div><div style="flex:1"><h4>大吉祥天女十二名號</h4><p>吉慶・吉祥・蓮華・嚴飾・具財・白色・大名稱・蓮華眼・大光曜…</p></div><div class="add">›</div></div>
+    <div class="lib-card" data-cat="佛號" onclick="startPractice('南無阿彌陀佛')"><div class="ico"><svg><use href="#lotus"/></svg></div><div style="flex:1"><h4>南無阿彌陀佛</h4><p>淨土法門根本佛號，攝受念佛人往生極樂。</p></div><div class="add">›</div></div>
+    <div class="lib-card" data-cat="佛號" onclick="startPractice('觀世音菩薩')"><div class="ico"><svg><use href="#i-buddha"/></svg></div><div style="flex:1"><h4>觀世音菩薩聖號</h4><p>大慈大悲，尋聲救苦。</p></div><div class="add">›</div></div>
+    <div class="lib-card" data-cat="咒語" onclick="startPractice('唵嘛呢叭咪吽')"><div class="ico"><svg><use href="#i-wheel"/></svg></div><div style="flex:1"><h4>六字大明咒</h4><p>唵嘛呢叭咪吽 ・ 觀音心咒。</p></div><div class="add">›</div></div>
+    <div class="lib-card" data-cat="咒語" onclick="startPractice('南無觀世音菩薩')"><div class="ico"><svg><use href="#i-doc"/></svg></div><div style="flex:1"><h4>大悲咒</h4><p>觀世音菩薩廣大圓滿無礙大悲心陀羅尼。</p></div><div class="add">›</div></div>
+    <div class="lib-card" data-cat="經文" onclick="startPractice('般若波羅蜜多心經')"><div class="ico"><svg><use href="#i-doc"/></svg></div><div style="flex:1"><h4>般若波羅蜜多心經</h4><p>觀自在菩薩，行深般若波羅蜜多時…</p></div><div class="add">›</div></div>
+    <div class="lib-card" data-cat="咒語" onclick="startPractice('準提神咒')"><div class="ico"><svg><use href="#lotus"/></svg></div><div style="flex:1"><h4>準提神咒</h4><p>稽首皈依蘇悉帝，頭面頂禮七俱胝…</p></div><div class="add">›</div></div>
+    <div class="lib-card" data-cat="咒語" onclick="startPractice('楞嚴咒心')"><div class="ico"><svg><use href="#i-wheel"/></svg></div><div style="flex:1"><h4>楞嚴咒心</h4><p>oṃ anale viśade vīra vajra dhare・心中持咒 光明護念</p></div><div class="add">›</div></div>
+    <div class="lib-card" data-cat="佛號" onclick="startPractice('大吉祥天女')"><div class="ico"><svg><use href="#lotus"/></svg></div><div style="flex:1"><h4>大吉祥天女十二名號</h4><p>吉慶・吉祥・蓮華・嚴飾・具財・白色・大名稱・蓮華眼・大光曜…</p></div><div class="add">›</div></div>
+    <div class="lib-card" data-cat="迴向文" onclick="go('dedication')"><div class="ico"><svg><use href="#lotus"/></svg></div><div style="flex:1"><h4>三段式迴向文</h4><p>槓桿 ・ 還債 ・ 投資　依序回向，圓滿功德。</p></div><div class="add">›</div></div>
+    <div class="lib-empty" id="libEmpty" style="display:none;text-align:center;color:var(--text-dim);font-size:13px;letter-spacing:3px;padding:50px 20px">此分類暫無內容</div>
   </div>
 
   <!-- ============= 記錄 ============= -->
   <div class="screen" data-screen="records">
-    <div class="top"><div class="icon-btn"></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="top"><div class="icon-btn"></div><div class="icon-btn" role="button" aria-label="通知" tabindex="0"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
     <div class="logo-wrap">
       <div class="logo"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
       <div class="subtitle">修持記錄</div>
@@ -573,7 +589,7 @@
 
   <!-- ============= 我的 ============= -->
   <div class="screen" data-screen="profile">
-    <div class="top"><div class="icon-btn"></div><div class="icon-btn"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
+    <div class="top"><div class="icon-btn"></div><div class="icon-btn" role="button" aria-label="通知" tabindex="0"><svg><use href="#i-bell"/></svg><div class="dot-red"></div></div></div>
     <div class="logo-wrap">
       <div class="logo"><svg viewBox="0 0 307.56 158.22"><use href="#logo-full"/></svg></div>
       <div class="subtitle">我 的</div>
@@ -585,7 +601,7 @@
         <div class="avatar"><svg><use href="#i-buddha"/></svg></div>
         <div style="flex:1">
           <div class="name">每日修持者</div>
-          <div class="sub"><svg><use href="#i-flame"/></svg>已連續修持 <span style="color:var(--gold)">5</span> 天</div>
+          <div class="sub"><svg><use href="#i-flame"/></svg>已連續修持 <span style="color:var(--gold)" id="profileStreak">0</span> 天</div>
         </div>
         <div style="color:var(--gold-soft);font-size:20px">›</div>
       </div>
@@ -734,6 +750,16 @@
     silent(){}
   };
   let currentSound='wood';
+  let woodOn=true, qingOn=true;
+  const QING_EVERY=27; // 108 / 4，每四分之一打一聲引磬
+  function toggleSwitch(el,kind){
+    el.classList.toggle('on');
+    const on=el.classList.contains('on');
+    el.setAttribute('aria-checked',on?'true':'false');
+    if(kind==='wood') woodOn=on;
+    if(kind==='qing') qingOn=on;
+    haptic(20);
+  }
   function openSoundPicker(){document.getElementById('soundModal').classList.add('show');}
   document.querySelectorAll('#soundModal .opt').forEach(el=>{
     el.onclick=()=>{
@@ -797,15 +823,24 @@
     if(count>=target) setTimeout(()=>finishPractice(true),700);
   }
   function tap(){
-    if(count<target){count++;updatePr();}
-    sounds[currentSound]?.();haptic(40);
+    if(!practiceStart) practiceStart=Date.now();
+    if(count>=target) return;
+    count++;updatePr();
+    if(woodOn) sounds[currentSound]?.();
+    if(qingOn && count%QING_EVERY===0 && currentSound!=='qing') sounds.qing();
+    haptic(40);
     const b=document.getElementById('prBurst');
     b.classList.remove('go');void b.offsetWidth;b.classList.add('go');
     const n=document.getElementById('prCount');
     n.classList.remove('flash');void n.offsetWidth;n.classList.add('flash');
   }
+  function undoTap(){
+    if(count<=0) return;
+    count--;updatePr();haptic(15);
+  }
   document.getElementById('tapBtn').addEventListener('click',tap);
   document.querySelector('.pr-ring').addEventListener('click',tap);
+  document.getElementById('undoBtn').addEventListener('click',undoTap);
 
   // ========= 暫存當下這次修持 =========
   let _pending=null;
@@ -861,6 +896,37 @@
     saveSessions(arr);refreshHome();go('home');
   }
 
+  // ========= 法藏分類 =========
+  function applyLibFilter(cat){
+    let shown=0;
+    document.querySelectorAll('.lib-card').forEach(card=>{
+      const ok = cat==='all' || card.dataset.cat===cat;
+      card.style.display = ok ? '' : 'none';
+      if(ok) shown++;
+    });
+    const empty=document.getElementById('libEmpty');
+    if(empty) empty.style.display = shown===0 ? '' : 'none';
+  }
+  document.querySelectorAll('.lib-tab .chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      document.querySelectorAll('.lib-tab .chip').forEach(c=>c.classList.toggle('active',c===chip));
+      applyLibFilter(chip.dataset.cat||'all');
+      haptic(10);
+    });
+  });
+
+  // ========= 通知紅點 =========
+  function updateBellDot(){
+    const has = todayPending().length>0;
+    document.querySelectorAll('.dot-red').forEach(d=>d.style.display = has ? '' : 'none');
+  }
+
+  // ========= 我的頁 =========
+  function refreshProfile(){
+    const s=document.getElementById('profileStreak');
+    if(s) s.textContent = calcStreak();
+  }
+
   // ========= 首頁 =========
   function calcStreak(){
     const days=new Set(loadSessions().map(s=>{const d=new Date(s.endTime);d.setHours(0,0,0,0);return d.getTime()}));
@@ -885,6 +951,7 @@
     el.innerHTML = pending.length
       ? `<span style="color:#e26a4a">●</span> 今日尚有 ${pending.length} 筆待迴向`
       : (todayCount?'<span style="color:var(--gold)">●</span> 今日已圓滿迴向':'');
+    updateBellDot();
   }
 
   // ========= 記錄頁 =========
@@ -924,10 +991,12 @@
     if(name==='home')refreshHome();
     if(name==='records')refreshRecords();
     if(name==='dedication')enterDedication();
+    if(name==='profile')refreshProfile();
   };
 
   refreshHome();
-  let lastTap=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastTap<300)e.preventDefault();lastTap=n;},{passive:false});
+  refreshProfile();
+  applyLibFilter('all');
 
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
