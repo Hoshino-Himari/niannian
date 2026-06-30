@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0a1832"/>
+  <g fill="#d6a85a">
+    <circle cx="434.00" cy="256.00" r="22"/>
+    <circle cx="425.29" cy="311.01" r="22"/>
+    <circle cx="400.01" cy="360.63" r="22"/>
+    <circle cx="360.63" cy="400.01" r="22"/>
+    <circle cx="311.01" cy="425.29" r="22"/>
+    <circle cx="200.99" cy="425.29" r="22"/>
+    <circle cx="151.37" cy="400.01" r="22"/>
+    <circle cx="111.99" cy="360.63" r="22"/>
+    <circle cx="86.71" cy="311.01" r="22"/>
+    <circle cx="78.00" cy="256.00" r="22"/>
+    <circle cx="86.71" cy="200.99" r="22"/>
+    <circle cx="111.99" cy="151.37" r="22"/>
+    <circle cx="151.37" cy="111.99" r="22"/>
+    <circle cx="200.99" cy="86.71" r="22"/>
+    <circle cx="256.00" cy="78.00" r="22"/>
+    <circle cx="311.01" cy="86.71" r="22"/>
+    <circle cx="360.63" cy="111.99" r="22"/>
+    <circle cx="400.01" cy="151.37" r="22"/>
+    <circle cx="425.29" cy="200.99" r="22"/>
+    <circle cx="256.00" cy="434.00" r="34" fill="#f0c878"/>
+  </g>
+</svg>
